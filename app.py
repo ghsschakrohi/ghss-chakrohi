@@ -9,6 +9,7 @@ import requests
 import pandas as pd
 import urllib.parse
 import time
+import pymssql
 from datetime import datetime
 
 app = Flask(__name__)
@@ -16,15 +17,16 @@ app.secret_key = 'ghss-01131502304'
 FAST2SMS_API_KEY = "DnMZlzvTrHgeQqM22KNlVYxAOpWTR61u3DLr4D9zR5JbE5rpQicF606xcCid"
 
 def get_db():
-    conn_str = (
-        "DRIVER={ODBC Driver 17 for SQL Server};"
-        "SERVER=BM\\SQLEXPRESS;"
-        "DATABASE=GHSS_Chakrohi_DB;"
-        "Trusted_Connection=yes;"
-        "TrustServerCertificate=yes;"
+    import pymssql
+    # TEMP - Change these to your Azure SQL details later
+    conn = pymssql.connect(
+        server='your_server.database.windows.net',
+        user='your_username',
+        password='your_password',
+        database='GHSS_Chakrohi_DB'
     )
-    return pyodbc.connect(conn_str)
-
+    return conn
+    
 def init_db():
     conn = get_db(); cursor = conn.cursor()
     cursor.execute("IF OBJECT_ID('teachers', 'U') IS NOT NULL DROP TABLE teachers")
