@@ -137,30 +137,65 @@ def results_page(): return render_template('results.html')
 
 @app.route('/api/check_result', methods=['POST'])
 def check_result():
-    if not request.form.get('reg_no'): return "Please enter Reg No!"
+    if not request.form.get('reg_no'):
+        return "Please enter Reg No! <a href='/results'>Back</a>"
     reg_no = request.form.get('reg_no').strip().upper()
     conn = get_db(); cursor = conn.cursor()
     cursor.execute("SELECT * FROM students WHERE enrollment_no =?", (reg_no,))
     student = cursor.fetchone()
     if not student:
         conn.close()
-        return f"<div style='text-align:center;padding:50px'><h2 style='color:red'>Student {reg_no} not found</h2><a href='/results'>Back</a></div>"
+        return f"<div style='text-align:center;padding:50px'><h2 style='color:red'>Student {reg_no} not found in students table</h2><p>First approve admission in Admin</p><a href='/results'>Back</a></div>"
     cursor.execute("SELECT * FROM monthly_results WHERE reg_no =? ORDER BY id DESC", (reg_no,))
-    results = cursor.fetchall(); conn.close()
+    results = cursor.fetchall()
+    conn.close()
     if not results:
-        return f"<div style='text-align:center;padding:50px'><h2>No results for {reg_no}</h2><a href='/results'>Back</a></div>"
-    total_obtained = sum([int(r[3] or 0) for r in results])
-    total_max = sum([int(r[4] or 100) for r in results])
+        return f"<div style='text-align:center;padding:50px'><h2>No results for {reg_no} yet</h2><p>Upload marks in Admin Dashboard</p><a href='/results'>Back</a></div>"
+    try:
+        total_obtained = sum([int(r['marks'] or 0) for r in results])
+        total_max = sum([int(r['max_marks'] or 100) for r in results])
+    except:
+        total_obtained = sum([int(r[4] or 0) for r in results])
+        total_max = sum([int(r[5] or 100) for r in results])
+
     percentage = round((total_obtained/total_max)*100, 2) if total_max else 0
     status = "PASS" if percentage >= 33 else "FAIL"
     grade = "A+" if percentage>=90 else "A" if percentage>=75 else "B+" if percentage>=60 else "B" if percentage>=50 else "C" if percentage>=33 else "F"
-    badge_color = "#16a34a" if status == "PASS" else "#dc2626"
-    qr_data = f"GHSS CHAKROHI VERIFIED\nReg: {reg_no}\nName: {student[1]}\nMarks: {total_obtained}/{total_max} {percentage}% {status}"
+
+    # Student name fix
+    try:
+        s_name = student['first_name']
+        s_class = student['class']
+        s_father = student['father_name']
+    except:
+        s_name = student[2]
+        s_class = student[4]
+        s_father = student[3]
+
+    qr_data = f"GHSS CHAKROHI VERIFIED\nReg: {reg_no}\nName: {s_name}\nMarks: {total_obtained}/{total_max} {percentage}% {status}"
     qr = qrcode.QRCode(version=1, box_size=4, border=1); qr.add_data(qr_data); qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white"); buffered = io.BytesIO(); img.save(buffered, format="PNG")
     qr_b64 = base64.b64encode(buffered.getvalue()).decode()
-    rows_html = "".join([f"<tr><td>{i}</td><td>{r[2]}</td><td><b>{r[3]}</b></td><td>{r[4]}</td><td><b>{r[3]}</b></td></tr>" for i,r in enumerate(results,1)])
-    html = f"<html><body><h2>{student[1]} - {percentage}% {status}</h2><table>{rows_html}</table><img src='data:image/png;base64,{qr_b64}'><br><a href='/results'>Back</a></body></html>"
+
+    rows_html = ""
+    for i,r in enumerate(results,1):
+        try:
+            month = r['month']; subj = r['subject']; marks = r['marks']; maxm = r['max_marks']
+        except:
+            month = r[2]; subj = r[3]; marks = r[4]; maxm = r[5]
+        rows_html += f"<tr><td>{i}</td><td>{month}</td><td>{subj}</td><td><b>{marks}</b></td><td>{maxm}</td></tr>"
+
+    html = f"""
+    <html><head><style>body{{font-family:Arial;text-align:center}} table{{margin:20px auto;border-collapse:collapse}} td,th{{border:1px solid #ccc;padding:8px}}</style></head>
+    <body>
+    <h2>GHSS CHAKROHI - RESULT</h2>
+    <h3>{s_name} ({reg_no}) - Class: {s_class}</h3>
+    <h2 style='color:{"green" if status=="PASS" else "red"}'>{total_obtained}/{total_max} - {percentage}% - {status} - Grade {grade}</h2>
+    <table><tr><th>#</th><th>Month</th><th>Subject</th><th>Marks</th><th>Max</th></tr>{rows_html}</table>
+    <img src='data:image/png;base64,{qr_b64}'><br><br>
+    <a href='/results'>Check Another</a> | <a href='/'>Home</a>
+    </body></html>
+    """
     return html
 
 @app.route('/admission')
