@@ -1,5 +1,8 @@
 Flask
 qrcode[pil]
-pandas
 openpyxl
 requests
+pyodbc
+pymssql
+qrcode
+pandas
