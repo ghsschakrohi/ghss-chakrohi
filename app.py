@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, send_file
-import pyodbc
+
 import qrcode
 import os
 import io
@@ -10,7 +10,7 @@ import pandas as pd
 import urllib.parse
 import time
 import sqlite3
-import pymssql
+
 from datetime import datetime
 
 app = Flask(__name__)
