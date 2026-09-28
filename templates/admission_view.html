@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admission Form - {{ adm_no }}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;padding:10px}
+.page{max-width:900px;margin:auto;background:white;border-radius:8px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,0.2)}
+.header-blue{background:#1a237e;color:white;padding:12px 20px;text-align:center}
+.header-blue h2{margin:0;font-size:18px;letter-spacing:1px}
+.header-blue p{margin:3px 0 0 0;font-size:11px;opacity:0.9}
+.section-title{background:#1a237e;color:white;padding:7px 15px;font-size:13px;font-weight:bold;margin-top:15px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 15px}
+.full{grid-column:span 2}
+label{font-size:11px;font-weight:bold;color:#333;display:block;margin-bottom:3px}
+.input-box{border:1px solid #ccc;padding:8px 10px;border-radius:4px;background:#f9fafb;font-size:12px;min-height:18px;word-wrap:break-word}
+table.academic{width:100%;border-collapse:collapse;font-size:11px;margin:10px 0}
+table.academic th{background:#1a237e;color:white;padding:6px;font-size:11px}
+table.academic td{border:1px solid #ccc;padding:6px;text-align:center;background:#fcfcfc}
+.undertaking{padding:15px;font-size:12px;line-height:20px;border-top:2px solid #1a237e;margin-top:10px}
+.btns{text-align:center;padding:15px;background:#f8fafc;border-top:1px solid #ddd}
+.btn{padding:10px 18px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;margin:5px;text-decoration:none;display:inline-block;font-size:13px}
+@media print{.btns{display:none} body{background:white;padding:0} .page{box-shadow:none;border-radius:0}}
+</style>
+</head>
+<body>
+
+<div class="page" id="printForm">
+<div class="header-blue">
+<h2>CH CHUNNI LAL MEMORIAL GOVT. HSS CHAKROHI (Jammu)</h2>
+<p>ADMISSION FORM - Session {{ data.get('session','2025-26') }} | UDISE: {{ data.get('udise_no','01131502304') }} | Admission No: {{ adm_no }} | Status: {{ data.get('status') }}</p>
+</div>
+
+<div style="padding:0 15px">
+<div class="section-title">Office Use / Top Details - All Fields Now Included</div>
+<div class="form-grid">
+<div><label>CONTACT NO.</label><div class="input-box">{{ data.get('contact_no') or '-' }}</div></div>
+<div><label>DATE</label><div class="input-box">{{ data.get('form_date') or '-' }}</div></div>
+<div><label>CLASS *</label><div class="input-box">{{ data.get('class_name') or '-' }}</div></div>
+<div><label>STREAM *</label><div class="input-box">{{ data.get('stream') or '-' }}</div></div>
+<div><label>UDISE NO</label><div class="input-box">{{ data.get('udise_no') or '01131502304' }}</div></div>
+<div><label>AADHAR SHILLA</label><div class="input-box">{{ data.get('aadhar_shilla') or '-' }}</div></div>
+<div><label>SESSION</label><div class="input-box">{{ data.get('session') or '-' }}</div></div>
+<div><label>ADM NO</label><div class="input-box">{{ data.get('adm_no') }}</div></div>
+<div><label>APPAR ID</label><div class="input-box">{{ data.get('appar_id') or '-' }}</div></div>
+<div><label>RATION CARD TYPE</label><div class="input-box">{{ data.get('ration_type') or '-' }}</div></div>
+</div>
+
+<div class="section-title">Personal Details</div>
+<div class="form-grid">
+<div class="full"><label>1. FATHER'S NAME *</label><div class="input-box">{{ data.get('father_name') or '-' }}</div></div>
+<div class="full"><label>2. STUDENT FULL NAME (IN CAPITAL LETTERS) *</label><div class="input-box">{{ data.get('name') or '-' }}</div></div>
+<div><label>3. MOTHER'S NAME *</label><div class="input-box">{{ data.get('mother_name') or '-' }}</div></div>
+<div><label>4. DATE OF BIRTH *</label><div class="input-box">{{ data.get('dob') or '-' }}</div></div>
+<div><label>5. RESIDENCE (Village, Tehsil, District)</label><div class="input-box">{{ data.get('residence') or '-' }}</div></div>
+<div><label>6. CASTE *</label><div class="input-box">{{ data.get('caste') or '-' }}</div></div>
+<div><label>7. REGISTRATION NO</label><div class="input-box">{{ data.get('registration_no') or '-' }}</div></div>
+<div><label>8. MOTHER TONGUE</label><div class="input-box">{{ data.get('mother_name') or '-' }} (Ref)</div></div>
+</div>
+
+<div class="section-title">9. Subjects Opted</div>
+<div class="form-grid">
+<div><label>01. ENGLISH (COMPULSORY)</label><div class="input-box">{{ data.get('sub1') or 'English' }}</div></div>
+<div><label>02. SUBJECT</label><div class="input-box">{{ data.get('sub2') or '-' }}</div></div>
+<div><label>03. SUBJECT</label><div class="input-box">{{ data.get('sub3') or '-' }}</div></div>
+<div><label>04. SUBJECT</label><div class="input-box">{{ data.get('sub4') or '-' }}</div></div>
+<div><label>05. SUBJECT</label><div class="input-box">{{ data.get('sub5') or '-' }}</div></div>
+<div><label>06. ADDITIONAL</label><div class="input-box">-</div></div>
+</div>
+
+<div class="section-title">10. Academic Report</div>
+<table class="academic">
+<tr><th>Exam</th><th>Year</th><th>Marks</th><th>Percentage</th><th>Subjects</th><th>School</th><th>Remarks</th></tr>
+<tr><td>Middle</td><td>{{ data.get('middle_year') }}</td><td>{{ data.get('middle_marks') }}</td><td>{{ data.get('middle_per') }}</td><td>{{ data.get('middle_sub') }}</td><td>{{ data.get('middle_school') }}</td><td>{{ data.get('middle_re') }}</td></tr>
+<tr><td>08. SSE (10th)</td><td>{{ data.get('sse_year') }}</td><td>{{ data.get('sse_marks') }}</td><td>{{ data.get('sse_per') }}</td><td>{{ data.get('sse_sub') }}</td><td>{{ data.get('sse_school') }}</td><td>{{ data.get('sse_re') }}</td></tr>
+<tr><td>09. HSP-I (11th)</td><td>{{ data.get('hsp_year') }}</td><td>{{ data.get('hsp_marks') }}</td><td>{{ data.get('hsp_per') }}</td><td>{{ data.get('hsp_sub') }}</td><td>{{ data.get('hsp_school') }}</td><td>{{ data.get('hsp_re') }}</td></tr>
+</table>
+
+<div class="section-title">KYC Details</div>
+<div class="form-grid">
+<div><label>11. AADHAR NO. SELF *</label><div class="input-box">{{ data.get('aadhar_self') or '-' }}</div></div>
+<div><label>12. AADHAR FATHER</label><div class="input-box">{{ data.get('aadhar_father') or '-' }}</div></div>
+<div><label>13. AADHAR MOTHER</label><div class="input-box">{{ data.get('aadhar_mother') or '-' }}</div></div>
+<div><label>14. FATHER'S OCCUPATION</label><div class="input-box">{{ data.get('father_occupation') or '-' }}</div></div>
+<div><label>15. FATHER'S INCOME e.g. 15000</label><div class="input-box">{{ data.get('father_income') or '-' }}</div></div>
+<div><label>16. BANK A/C NO</label><div class="input-box">{{ data.get('bank_account') or '-' }}</div></div>
+<div><label>BANK IFSC</label><div class="input-box">{{ data.get('bank_ifsc') or '-' }}</div></div>
+<div><label>17. Category</label><div class="input-box">{{ data.get('caste') or '-' }}</div></div>
+</div>
+
+<div class="undertaking">
+<div class="section-title" style="margin:-15px -15px 10px -15px">UNDERTAKING BY THE STUDENT</div>
+I, <b>{{ data.get('name') }}</b> S/O <b>{{ data.get('father_name') }}</b> R/O <b>{{ data.get('residence') }}</b> hereby declare that I will remain regular and punctual, and I am seeking admission in Class <b>{{ data.get('class_name') }}</b>.<br><br>
+<div style="display:flex;justify-content:space-between;margin-top:20px">
+<div>Signature of Father/Guardian<br><br>___________________</div>
+<div>Signature of Student<br><br>___________________</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<div class="btns">
+<a href="/admin/admissions" class="btn" style="background:#6c757d;color:white">⬅ Back to List</a>
+<button onclick="window.print()" class="btn" style="background:#1a237e;color:white">🖨️ Print</button>
+<button onclick="downloadPDF()" class="btn" style="background:#16a34a;color:white">📄 Download as PDF</button>
+{% if data.get('status') != 'Approved' %}
+<a href="/admin/approve/{{ adm_no }}" class="btn" style="background:#f59e0b;color:black">✅ Approve Now</a>
+{% endif %}
+<a href="/admin/edit/{{ adm_no }}" class="btn" style="background:#ff9800;color:white">✏️ Edit / Update</a>
+</div>
+
+<script>
+function downloadPDF(){
+  var el = document.getElementById('printForm');
+  var opt = {margin:3, filename:'Admission_Form_{{ adm_no }}.pdf', image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}};
+  html2pdf().set(opt).from(el).save();
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admissions List - GHSS Chakrohi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:Arial;background:#f1f5f9;margin:0;padding:10px}
+.box{background:white;max-width:1400px;margin:auto;border-radius:10px;overflow:hidden;box-shadow:0 5px 20px #0001}
+.top{background:#0b3d91;color:white;padding:15px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+table{width:100%;border-collapse:collapse;font-size:11px;min-width:1200px}
+th{background:#0b3d91;color:white;padding:10px 6px;text-align:left;position:sticky;top:0;white-space:nowrap}
+td{padding:8px 6px;border-bottom:1px solid #e5e7eb;vertical-align:top}
+tr:hover{background:#f8fbff}
+.btn{padding:6px 10px;border-radius:4px;text-decoration:none;font-size:11px;font-weight:bold;border:none;cursor:pointer;display:inline-block;margin:2px}
+.search{padding:10px;width:320px;border:1px solid #ccc;border-radius:6px}
+.top-contact{background:#ffeb3b;color:#000;padding:2px 6px;border-radius:4px;font-weight:bold}
+.badge{padding:3px 7px;border-radius:10px;font-size:10px;font-weight:bold;color:white}
+.approved{background:#16a34a}.pending{background:#f59e0b}.rejected{background:#ef4444}
+@media print{.no-print{display:none}.box{box-shadow:none} body{padding:0}}
+</style>
+</head>
+<body>
+<div class="box">
+<div class="top no-print">
+<div><h2 style="margin:0">📋 Admissions List - GHSS Chakrohi</h2><p style="margin:4px 0 0 0;font-size:12px">Total: {{ admissions|length }} Admissions | Contact No (Top Field) Included</p></div>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+<input type="text" id="search" class="search" placeholder="Search Name, Adm No, Contact, Appar ID..." onkeyup="searchTable()">
+<a href="/admin/dashboard" style="background:white;color:#0b3d91;padding:8px 15px;border-radius:6px;text-decoration:none;font-weight:bold">← Dashboard</a>
+<button onclick="exportExcel()" class="btn" style="background:#22c55e;color:white;padding:8px 14px">📊 Excel</button>
+<button onclick="window.print()" class="btn" style="background:#f59e0b;color:white;padding:8px 14px">🖨️ Print</button>
+</div>
+</div>
+
+<div style="overflow:auto;max-height:85vh">
+<table id="admissionTable">
+<thead>
+<tr>
+<th>#</th><th>Adm No / Session</th><th>Date / Status</th><th>Student Name / DOB</th><th>Father Name</th><th>Class / Stream</th><th>CONTACT - TOP</th><th>Appar ID</th><th>Residence / Caste</th><th>Reg No</th><th>Subjects</th><th class="no-print">Action</th>
+</tr>
+</thead>
+<tbody>
+{% for a in admissions %}
+<tr>
+<td>{{ loop.index }}</td>
+<td><b>{{ a.adm_no or '-' }}</b><br><span style="font-size:10px;color:#666">{{ a.session or '' }}</span></td>
+<td>{{ a.form_date or '-' }}<br>
+{% if a.status == 'Approved' %}<span class="badge approved">Approved</span>
+{% elif a.status == 'Rejected' %}<span class="badge rejected">Rejected</span>
+{% else %}<span class="badge pending">Pending</span>{% endif %}
+</td>
+<td><b>{{ a.name or '-' }}</b><br><span style="font-size:10px;color:#666">DOB: {{ a.dob or '-' }}</span></td>
+<td>{{ a.father_name or '-' }}</td>
+<td><b>{{ a.class_name or '-' }}</b><br><small>{{ a.stream or '-' }}</small></td>
+<td><span class="top-contact">{{ a.contact_no or '-' }}</span><br><span style="font-size:10px">Shilla: {{ a.aadhar_shilla or '-' }}</span></td>
+<td>{{ a.appar_id or '-' }}</td>
+<td>{{ a.residence or '-' }}<br><small style="color:#0b3d91"><b>{{ a.caste or '' }}</b></small></td>
+<td>{{ a.registration_no or '-' }}<br><small>{{ a.ration_type or '' }}</small></td>
+<td style="font-size:10px">{{ a.sub1 or '' }}, {{ a.sub2 or '' }}, {{ a.sub3 or '' }}</td>
+<td class="no-print" style="min-width:210px">
+<a href="/admin/view/{{ a.adm_no }}" target="_blank" class="btn" style="background:#0b3d91;color:white">👁️ View Form</a>
+<a href="/admin/view/{{ a.adm_no }}" target="_blank" class="btn" style="background:#111827;color:white">📄 View PDF</a>
+{% if a.status!= 'Approved' %}
+<a href="/admin/approve/{{ a.adm_no }}" class="btn" style="background:#16a34a;color:white" onclick="return confirm('Approve {{ a.name }}?')">✅ Approve</a>
+{% endif %}
+<a href="/admin/edit/{{ a.adm_no }}" class="btn" style="background:#ff9800;color:white">✏️ Edit</a>
+<a href="/api/delete_admission/{{ a.id }}" class="btn" style="background:#ef4444;color:white" onclick="return confirm('Delete {{ a.name }}? This cannot be undone!')">🗑️ Del</a>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% if not admissions %}
+<p style="text-align:center;padding:50px;color:#666">No Admissions Yet<br><a href="/admission" style="background:#0b3d91;color:white;padding:8px 15px;border-radius:6px;text-decoration:none">+ Fill First Admission</a></p>
+{% endif %}
+</div>
+
+<div style="padding:10px;background:#f8fafc;text-align:center;font-size:11px;color:#666" class="no-print">
+GHSS Chakrohi | UDISE: 01131502304 | Click View Form to see full filled admission form with Print & Download
+</div>
+</div>
+
+<script>
+function searchTable(){
+  let input=document.getElementById("search").value.toUpperCase();
+  let tr=document.getElementById("admissionTable").getElementsByTagName("tr");
+  for(let i=1;i<tr.length;i++){
+    let txt=tr[i].innerText.toUpperCase();
+    tr[i].style.display=txt.includes(input)?"":"none";
+  }
+}
+function exportExcel(){
+  let table=document.getElementById("admissionTable");
+  let html=table.outerHTML;
+  let url='data:application/vnd.ms-excel,'+encodeURIComponent(html);
+  let a=document.createElement("a");
+  a.href=url;
+  a.download="GHSS_Chakrohi_Admissions_{{ admissions|length }}.xls";
+  a.click();
+}
+</script>
+</body>
+</html>

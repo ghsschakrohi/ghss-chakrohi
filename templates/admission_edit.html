@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Edit Admission - {{ adm_no }}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{font-family:Arial;background:#f1f5f9;margin:0;padding:10px}
+.page{max-width:950px;margin:auto;background:white;border-radius:10px;box-shadow:0 4px 15px #0002;overflow:hidden}
+.top-bar{background:#1a237e;color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.search-box{display:flex;gap:6px}
+.search-box input{padding:8px 12px;border-radius:6px;border:none;width:220px}
+.search-box button{padding:8px 14px;border:none;border-radius:6px;background:#ffeb3b;color:#000;font-weight:bold;cursor:pointer}
+.title{background:#1a237e;color:white;padding:8px 15px;font-weight:bold;font-size:13px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 15px}
+.full{grid-column:span 2}
+label{font-size:11px;font-weight:bold}
+input,select{width:100%;padding:8px;border:1px solid #ccc;border-radius:5px;font-size:12px;box-sizing:border-box}
+.btns{text-align:center;padding:15px;background:#f8fafc;border-top:1px solid #ddd;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.btn{padding:11px 22px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;text-decoration:none;font-size:13px}
+.update{background:#16a34a;color:white}.cancel{background:#6b7280;color:white}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.full{grid-column:span 1}}
+</style>
+</head>
+<body>
+<div class="page">
+<div class="top-bar">
+<div><b>✏️ Edit Admission - {{ adm_no }}</b><br><small>UDISE: 01131502304 | Search & Update</small></div>
+<div class="search-box">
+<input id="searchAdm" placeholder="Enter Adm No to Search..." value="{{ adm_no }}">
+<button onclick="searchStudent()">🔍 Search</button>
+</div>
+</div>
+
+<form method="POST" action="/api/update_admission/{{ adm_no }}">
+<div class="title">Office Use / Top Details</div>
+<div class="grid">
+<div><label>CONTACT NO *</label><input name="contact_no" value="{{ data.get('contact_no','') }}" required></div>
+<div><label>DATE</label><input type="date" name="form_date" value="{{ data.get('form_date','') }}"></div>
+<div><label>CLASS *</label><input name="class_name" value="{{ data.get('class_name','') }}" required></div>
+<div><label>STREAM</label><select name="stream"><option>{{ data.get('stream','') }}</option><option>Medical</option><option>Non-Medical</option><option>Arts</option><option>Commerce</option><option>General</option></select></div>
+<div><label>SESSION</label><input name="session" value="{{ data.get('session','2025-26') }}"></div>
+<div><label>ADM NO</label><input value="{{ adm_no }}" disabled style="background:#eee"><input type="hidden" name="adm_no" value="{{ adm_no }}"></div>
+<div><label>UDISE NO</label><input name="udise_no" value="{{ data.get('udise_no','01131502304') }}"></div>
+<div><label>AADHAR SHILLA</label><input name="aadhar_shilla" value="{{ data.get('aadhar_shilla','') }}"></div>
+<div><label>APPAR ID</label><input name="appar_id" value="{{ data.get('appar_id','') }}"></div>
+<div><label>RATION TYPE</label><input name="ration_type" value="{{ data.get('ration_type','') }}"></div>
+</div>
+
+<div class="title">Personal Details</div>
+<div class="grid">
+<div class="full"><label>STUDENT FULL NAME</label><input name="name" value="{{ data.get('name','') }}" required></div>
+<div><label>FATHER'S NAME</label><input name="father_name" value="{{ data.get('father_name','') }}"></div>
+<div><label>MOTHER'S NAME</label><input name="mother_name" value="{{ data.get('mother_name','') }}"></div>
+<div><label>DOB</label><input type="date" name="dob" value="{{ data.get('dob','') }}"></div>
+<div><label>RESIDENCE</label><input name="residence" value="{{ data.get('residence','') }}"></div>
+<div><label>CASTE</label><input name="caste" value="{{ data.get('caste','') }}"></div>
+<div><label>REGISTRATION NO</label><input name="registration_no" value="{{ data.get('registration_no','') }}"></div>
+</div>
+
+<div class="title">9. Subjects Opted</div>
+<div class="grid">
+<div><label>Sub1 English</label><input name="sub1" value="{{ data.get('sub1','') }}"></div>
+<div><label>Sub2</label><input name="sub2" value="{{ data.get('sub2','') }}"></div>
+<div><label>Sub3</label><input name="sub3" value="{{ data.get('sub3','') }}"></div>
+<div><label>Sub4</label><input name="sub4" value="{{ data.get('sub4','') }}"></div>
+<div><label>Sub5</label><input name="sub5" value="{{ data.get('sub5','') }}"></div>
+</div>
+
+<div class="title">10. Academic Report</div>
+<div class="grid">
+<div><label>Middle Year</label><input name="middle_year" value="{{ data.get('middle_year','') }}"></div>
+<div><label>Middle Marks</label><input name="middle_marks" value="{{ data.get('middle_marks','') }}"></div>
+<div><label>Middle %</label><input name="middle_per" value="{{ data.get('middle_per','') }}"></div>
+<div><label>Middle School</label><input name="middle_school" value="{{ data.get('middle_school','') }}"></div>
+<div><label>SSE Year</label><input name="sse_year" value="{{ data.get('sse_year','') }}"></div>
+<div><label>SSE Marks</label><input name="sse_marks" value="{{ data.get('sse_marks','') }}"></div>
+<div><label>SSE %</label><input name="sse_per" value="{{ data.get('sse_per','') }}"></div>
+<div><label>SSE School</label><input name="sse_school" value="{{ data.get('sse_school','') }}"></div>
+<div><label>HSP Year</label><input name="hsp_year" value="{{ data.get('hsp_year','') }}"></div>
+<div><label>HSP Marks</label><input name="hsp_marks" value="{{ data.get('hsp_marks','') }}"></div>
+<div><label>HSP %</label><input name="hsp_per" value="{{ data.get('hsp_per','') }}"></div>
+<div><label>HSP School</label><input name="hsp_school" value="{{ data.get('hsp_school','') }}"></div>
+</div>
+
+<div class="title">KYC Details</div>
+<div class="grid">
+<div><label>AADHAR SELF</label><input name="aadhar_self" value="{{ data.get('aadhar_self','') }}"></div>
+<div><label>AADHAR FATHER</label><input name="aadhar_father" value="{{ data.get('aadhar_father','') }}"></div>
+<div><label>AADHAR MOTHER</label><input name="aadhar_mother" value="{{ data.get('aadhar_mother','') }}"></div>
+<div><label>FATHER OCCUPATION</label><input name="father_occupation" value="{{ data.get('father_occupation','') }}"></div>
+<div><label>FATHER INCOME</label><input name="father_income" value="{{ data.get('father_income','') }}"></div>
+<div><label>BANK A/C</label><input name="bank_account" value="{{ data.get('bank_account','') }}"></div>
+<div><label>BANK IFSC</label><input name="bank_ifsc" value="{{ data.get('bank_ifsc','') }}"></div>
+</div>
+
+<div class="btns">
+<button type="submit" class="btn update">💾 Update</button>
+<a href="/admin/view/{{ adm_no }}" class="btn cancel">❌ Cancel</a>
+<a href="/admin/admissions" class="btn cancel">⬅ Back to List</a>
+</div>
+</form>
+</div>
+<script>
+function searchStudent(){
+ let v=document.getElementById('searchAdm').value.trim();
+ if(!v){alert('Enter Adm No');return;}
+ window.location='/admin/edit/'+v;
+}
+</script>
+</body>
+</html>

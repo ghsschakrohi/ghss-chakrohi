@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>{{ t['name'] }} - GHSS Chakrohi</title>
+<style>
+body{font-family:Arial;padding:20px;background:#f0f4ff}
+.card{max-width:600px;margin:auto;background:white;padding:25px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.2)}
+img{width:150px;height:150px;border-radius:50%;object-fit:cover;border:4px solid #0d47a1}
+a.btn{display:inline-block;margin-top:15px;padding:8px 18px;background:#0d47a1;color:white;text-decoration:none;border-radius:5px}
+</style>
+</head>
+<body>
+<div class="card" style="text-align:center">
+<img src="/static/photos/{{ t['id'] }}.jpg" 
+     onerror="this.src='https://ui-avatars.com/api/?name={{ t['name'] }}&background=0D47A1&color=fff&size=150'" 
+     alt="{{ t['name'] }}" 
+     style="width:150px;height:150px;border-radius:50%;object-fit:cover;border:4px solid #0d47a1">
+<h2>{{ t['name'] }}</h2>
+<h4 style="color:#0d47a1">{{ t['designation'] }}</h4>
+<p><b>Subject:</b> {{ t['subject'] }} | <b>Experience:</b> {{ t['exp'] }} Years | <b>Qualification:</b> {{ t['qualification'] }} | <b>W.E.F:</b> {{ t['wef'] }}</p>
+<p><b>School:</b> Govt. Hr. Sec. School Chakrohi, R S Pura, Jammu<br>
+<b>UDISE:</b> 01131502304<br>
+<b>Email:</b> principalchakrohi@gmail.com<br>
+<b>Classes:</b> 6th to 12th</p>
+<hr>
+<p style="font-size:13px;text-align:left">
+This is the official biodata of {{ t['name'] }}, {{ t['designation'] }} at GHSS Chakrohi.
+All official records, academics, student corner, gallery and lab information is available on main website.
+</p>
+<a href="/" class="btn">Back to Home</a>
+</div>
+</body>
+</html>

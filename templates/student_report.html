@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html><head><title>Student Report - GHSS Chakrohi</title><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{font-family:Arial;background:#f1f5f9;padding:15px}.box{background:#fff;max-width:1200px;margin:auto;border-radius:8px;overflow:hidden;box-shadow:0 4px 12px #0001}.top{background:#0b3d91;color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}.filters{padding:12px 18px;background:#f8fafc;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid #e2e8f0}.filters input,.filters select{padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:13px}.btn{padding:8px 14px;border:none;border-radius:5px;font-weight:bold;cursor:pointer;text-decoration:none;display:inline-block;font-size:12px} table{width:100%;border-collapse:collapse;font-size:12px} th{background:#0b3d91;color:#fff;padding:8px 6px;position:sticky;top:0} td{padding:7px 6px;border-bottom:1px solid #e2e8f0} tr:hover{background:#f0f7ff} @media print{.no-print{display:none}}</style>
+</head><body>
+<div class="box">
+<div class="top"><div><b>📊 GHSS CHAKROHI - STUDENT REPORT</b><br><span style="font-size:11px;opacity:.9">{{ rows|length }} Approved Students | {{ role }}: {{ user }}</span></div><div class="no-print"><a href="/admin/dashboard" class="btn" style="background:#e2e8f0;color:#111">← Dashboard</a> <a href="/admin/student_report/excel" class="btn" style="background:#16a34a;color:#fff">📥 Excel Download</a> <button onclick="window.print()" class="btn" style="background:#0b3d91;color:#fff">🖨️ Print</button></div></div>
+
+<form class="filters no-print" method="GET">
+<input type="text" name="q" value="{{ search_q }}" placeholder="🔍 Search Name / Adm No / Reg No / Mobile">
+<input type="text" name="class" value="{{ class_filter }}" placeholder="Class e.g. 11th" style="width:110px">
+<select name="stream" style="width:130px"><option value="">All Streams</option><option value="Medical" {% if stream_filter=='Medical' %}selected{% endif %}>Medical</option><option value="Non Medical" {% if stream_filter=='Non Medical' %}selected{% endif %}>Non Medical</option><option value="Arts" {% if stream_filter=='Arts' %}selected{% endif %}>Arts</option><option value="Commerce" {% if stream_filter=='Commerce' %}selected{% endif %}>Commerce</option></select>
+<button class="btn" style="background:#0b3d91;color:#fff">Filter</button>
+<a href="/admin/student_report" class="btn" style="background:#ddd;color:#111">Clear</a>
+</form>
+
+<div style="overflow:auto;max-height:75vh">
+<table><tr><th>#</th><th>Student Name</th><th>Father Name</th><th>Class</th><th>Contact No</th><th>Stream</th><th>DOB</th><th>Registration No</th><th>Adm No (School)</th><th>Category</th></tr>
+{% for r in rows %}
+<tr><td>{{ loop.index }}</td><td><b>{{ r.name }}</b></td><td>{{ r.father_name }}</td><td>{{ r.class_name }}</td><td>{{ r.contact_no }}</td><td>{{ r.stream }}</td><td>{{ r.dob }}</td><td>{{ r.registration_no }}</td><td><b style="color:#0b3d91">{{ r.adm_no }}</b></td><td>{{ r.caste }}</td></tr>
+{% else %}
+<tr><td colspan="10" style="text-align:center;padding:20px;color:#999">No Approved Students Found</td></tr>
+{% endfor %}
+</table>
+</div>
+</div>
+</body></html>
