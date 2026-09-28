@@ -1,0 +1,8 @@
+Flask==3.0.0
+pyodbc
+qrcode
+pandas
+openpyxl
+requests
+gunicorn
+Pillow
