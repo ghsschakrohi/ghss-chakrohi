@@ -140,64 +140,63 @@ def check_result():
     if not request.form.get('reg_no'):
         return "Please enter Reg No! <a href='/results'>Back</a>"
     reg_no = request.form.get('reg_no').strip().upper()
-    conn = get_db(); cursor = conn.cursor()
+    conn = get_db(); conn.row_factory = sqlite3.Row; cursor = conn.cursor()
     cursor.execute("SELECT * FROM students WHERE enrollment_no =?", (reg_no,))
     student = cursor.fetchone()
     if not student:
         conn.close()
-        return f"<div style='text-align:center;padding:50px'><h2 style='color:red'>Student {reg_no} not found in students table</h2><p>First approve admission in Admin</p><a href='/results'>Back</a></div>"
+        return f"<div style='text-align:center;padding:80px;font-family:Arial'><h2 style='color:red'>Student {reg_no} not found</h2><a href='/results'>Back</a></div>"
     cursor.execute("SELECT * FROM monthly_results WHERE reg_no =? ORDER BY id DESC", (reg_no,))
     results = cursor.fetchall()
     conn.close()
     if not results:
-        return f"<div style='text-align:center;padding:50px'><h2>No results for {reg_no} yet</h2><p>Upload marks in Admin Dashboard</p><a href='/results'>Back</a></div>"
-    try:
-        total_obtained = sum([int(r['marks'] or 0) for r in results])
-        total_max = sum([int(r['max_marks'] or 100) for r in results])
-    except:
-        total_obtained = sum([int(r[4] or 0) for r in results])
-        total_max = sum([int(r[5] or 100) for r in results])
+        return f"<div style='text-align:center;padding:80px;font-family:Arial'><h2>No results for {reg_no}</h2><a href='/results'>Back</a></div>"
 
+    total_obtained = sum([r['marks'] for r in results])
+    total_max = sum([r['max_marks'] for r in results])
     percentage = round((total_obtained/total_max)*100, 2) if total_max else 0
     status = "PASS" if percentage >= 33 else "FAIL"
     grade = "A+" if percentage>=90 else "A" if percentage>=75 else "B+" if percentage>=60 else "B" if percentage>=50 else "C" if percentage>=33 else "F"
 
-    # Student name fix
-    try:
-        s_name = student['first_name']
-        s_class = student['class']
-        s_father = student['father_name']
-    except:
-        s_name = student[2]
-        s_class = student[4]
-        s_father = student[3]
-
-    qr_data = f"GHSS CHAKROHI VERIFIED\nReg: {reg_no}\nName: {s_name}\nMarks: {total_obtained}/{total_max} {percentage}% {status}"
-    qr = qrcode.QRCode(version=1, box_size=4, border=1); qr.add_data(qr_data); qr.make(fit=True)
+    qr_data = f"GHSS CHAKROHI VERIFIED\nReg: {reg_no}\nName: {student['first_name']}\nMarks: {total_obtained}/{total_max} {percentage}% {status}"
+    qr = qrcode.QRCode(version=1, box_size=5, border=1); qr.add_data(qr_data); qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white"); buffered = io.BytesIO(); img.save(buffered, format="PNG")
     qr_b64 = base64.b64encode(buffered.getvalue()).decode()
 
-    rows_html = ""
-    for i,r in enumerate(results,1):
-        try:
-            month = r['month']; subj = r['subject']; marks = r['marks']; maxm = r['max_marks']
-        except:
-            month = r[2]; subj = r[3]; marks = r[4]; maxm = r[5]
-        rows_html += f"<tr><td>{i}</td><td>{month}</td><td>{subj}</td><td><b>{marks}</b></td><td>{maxm}</td></tr>"
+    rows = "".join([f"<tr><td>{i}</td><td>{r['month']}</td><td style='text-align:left'>{r['subject'].title()}</td><td><b>{r['marks']}</b></td><td>{r['max_marks']}</td><td>{round((r['marks']/r['max_marks']*100),1) if r['max_marks'] else 0}%</td></tr>" for i,r in enumerate(results,1)])
 
-    html = f"""
-    <html><head><style>body{{font-family:Arial;text-align:center}} table{{margin:20px auto;border-collapse:collapse}} td,th{{border:1px solid #ccc;padding:8px}}</style></head>
+    return f"""
+    <html><head><title>Result - {reg_no}</title><meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+    body{{font-family:'Segoe UI',Arial;background:#f0f4ff;margin:0;padding:20px}}
+    .sheet{{max-width:750px;margin:auto;background:white;padding:25px;border-radius:12px;box-shadow:0 5px 20px rgba(0,0,0,.15);border-top:6px solid #0d47a1}}
+    .header{{text-align:center;border-bottom:2px solid #0d47a1;padding-bottom:15px}}
+    .header h1{{margin:0;color:#0d47a1}} .header h3{{margin:5px;color:#333}}
+    table{{width:100%;border-collapse:collapse;margin:15px 0}} th{{background:#0d47a1;color:white;padding:10px}} td{{padding:9px;border:1px solid #ddd;text-align:center}}
+    .total{{background:#e3f2fd;font-weight:bold;font-size:18px}}
+    .pass{{color:green}} .fail{{color:red}}
+    @media print{{.no-print{{display:none}}}}
+    </style></head>
     <body>
-    <h2>GHSS CHAKROHI - RESULT</h2>
-    <h3>{s_name} ({reg_no}) - Class: {s_class}</h3>
-    <h2 style='color:{"green" if status=="PASS" else "red"}'>{total_obtained}/{total_max} - {percentage}% - {status} - Grade {grade}</h2>
-    <table><tr><th>#</th><th>Month</th><th>Subject</th><th>Marks</th><th>Max</th></tr>{rows_html}</table>
-    <img src='data:image/png;base64,{qr_b64}'><br><br>
-    <a href='/results'>Check Another</a> | <a href='/'>Home</a>
+    <div class="sheet">
+      <div class="header">
+        <h1>🏫 GHSS CHAKROHI</h1>
+        <h3>Monthly Test Report Card (Session 2026-27)</h3>
+        <p><b>Name:</b> {student['first_name']} | <b>Father:</b> {student['father_name']} | <b>Class:</b> {student['class']} | <b>Reg No:</b> {reg_no}</p>
+      </div>
+      <table><tr><th>#</th><th>Month</th><th>Subject</th><th>Obtained</th><th>Max</th><th>%</th></tr>{rows}
+      <tr class="total"><td colspan="3">TOTAL</td><td>{total_obtained}</td><td>{total_max}</td><td>{percentage}%</td></tr></table>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px">
+        <div style="text-align:left"><h2 class="{'pass' if status=='PASS' else 'fail'}" style="margin:0">{status} - Grade {grade}</h2><p style="margin:0">Percentage: {percentage}%</p></div>
+        <div style="text-align:center"><img src="data:image/png;base64,{qr_b64}" width="130"><br><small>Verified QR</small></div>
+      </div>
+      <div class="no-print" style="text-align:center;margin-top:25px">
+        <button onclick="window.print()" style="padding:10px 20px;background:#0d47a1;color:white;border:none;border-radius:6px">🖨️ Print</button>
+        <a href="/results" style="margin-left:15px">Check Another</a> | <a href="/">Home</a>
+      </div>
+    </div>
     </body></html>
     """
-    return html
-
 @app.route('/admission')
 def admission_form(): return render_template('admission.html')
 
