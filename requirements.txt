@@ -3,3 +3,4 @@ qrcode[pil]
 openpyxl
 requests
 pandas
+gunicorn
