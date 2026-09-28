@@ -27,13 +27,17 @@ def get_db():
     
 def init_db():
     conn = get_db(); cursor = conn.cursor()
-    cursor.execute("IF OBJECT_ID('teachers', 'U') IS NOT NULL DROP TABLE teachers")
-    cursor.execute('''CREATE TABLE teachers (id INT IDENTITY(1,1) PRIMARY KEY, name NVARCHAR(200), designation NVARCHAR(200), subject NVARCHAR(100), exp int, qualification NVARCHAR(100), wef NVARCHAR(100))''')
+    cursor.execute("DROP TABLE IF EXISTS teachers")
+    cursor.execute('''CREATE TABLE teachers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, designation TEXT, subject TEXT, exp TEXT, qualification TEXT, wef TEXT)''')
     staff = [('Mrs. Pushpa Lochan', 'Principal', 'Administration', '25', 'Masters,B.Ed', ''),('Mr. Gurmeet Singh', 'Sr. Lect Sociology - Vice Principal', 'Sociology', '18', 'Masters, M.Phil,B.Ed', ''),('Mr. Daleep Sharma', 'Sr. Lect Urdu', 'Urdu', '18', 'Masters, P.hd, B.Ed', ''),('Mr. Harveen Singh Sudan', 'Sr. Lect Political Science', 'Pol. Science', '16', 'Masters, M.Phil, B.Ed', ''),('Mrs. Neeru Ratta', 'Sr. Lect Education', 'Education', '16', 'Masters, M.Phil,B.Ed ', ''),('Mrs. Bindu Devi', 'Sr. Lect Zoology', 'Zoology', '16', 'Masters, B.Ed', ''),('Mrs. Bindu Dogra', 'Sr. Lect Hindi', 'Hindi', '16', 'Masters, NET, B.Ed', ''),('Mr. Paramjit Singh', 'Sr. Lect Computer Science', 'Computer Science', '17', 'MCA, M.Phil, B.Ed', '26-01-2023'),('Mrs. Shammi Chib', 'Lecturer Physics', 'Physics', '22', 'M.Sc, B.Ed', ''),('Mr. Shakti Kumar', 'Lecturer Chemistry', 'Chemistry', '33', 'M.Sc, B.Ed', ''),('Mrs. Alka', 'Lecturer English', 'English', '-', 'M.A, B.Ed', ''),('Mrs. Darshan Kour', 'I/C Lect Electronics', 'Electronics', '26', 'M.Sc, B.Ed', ''),('Mr. Rajesh Gupta', 'I/C Lect Botany', 'Botany', '22', 'M.Sc, B.Ed', ''),('Mrs. Ravinder Kour', 'I/C Lect Maths', 'Mathematics', '22', 'M.Sc, B.Ed', ''),('Mrs. Neelam Sudan', 'Master', 'General', '22', 'Masters, B.Ed', ''),('Mr. Ram Lal', 'Master', 'General', '19', 'Masters, B.Ed', ''),('Mr. Shariq Ishaq Mir', 'Teacher', 'General', '19', 'MA, B.Ed', ''),('Mr. Rohit Gupta', 'Teacher', 'General', '10', 'M.Sc, B.Ed', ''),('Mrs. Indu Gandhi', 'Teacher', 'General', '10', 'M.A, B.Ed', ''),('Mr. Sudansh Sharma', 'Teacher', 'General', '10', 'M.Sc, B.Ed', ''),('Mrs. Meenakshi Gupta', 'Teacher', 'General', '10', 'M.A, B.Ed', ''),('Mrs. Rasmeet Kour', 'Teacher', 'General', '10', 'M.Sc, B.Ed', ''),('Mrs. Devinder Kour', 'Sr. Assistant', 'Non-Teaching', '10', 'Graduate', ''),('Mr. Karanjeet Kumar', 'Lab. Assistant', 'Non-Teaching', '20', '12th', ''),('Mr. Rakesh Sharma', 'Lab Assistant', 'Non-Teaching', '20', '12th', ''),('Mrs. Asha Devi', 'Class-IV', 'Non-Teaching', '18', '', ''),('Mrs. Reena Devi', 'Class-IV', 'Non-Teaching', '12', '', ''),('Mr. Ravinder Choudhary', 'Class-IV', 'Non-Teaching', '10', '', ''),('Mr. Shubdeep Akash', 'Class-IV', 'Non-Teaching', '5', 'MA', ''),]
-    for s in staff: cursor.execute("INSERT INTO teachers (name, designation, subject, exp, qualification, wef) VALUES (?,?,?,?,?,?)", s[0], s[1], s[2], s[3], s[4], s[5])
-    cursor.execute("""IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='users' AND xtype='U') CREATE TABLE users (id INT IDENTITY(1,1) PRIMARY KEY, username NVARCHAR(100) UNIQUE, password NVARCHAR(100), full_name NVARCHAR(200), role NVARCHAR(50), subject NVARCHAR(100), mobile NVARCHAR(20), is_active INT DEFAULT 1, created_at DATETIME DEFAULT GETDATE())""")
-    cursor.execute("""IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='students' AND xtype='U') CREATE TABLE students (id INT IDENTITY(1,1) PRIMARY KEY, enrollment_no NVARCHAR(100) UNIQUE, first_name NVARCHAR(200), father_name NVARCHAR(200), class NVARCHAR(50), dob DATE, mobile NVARCHAR(20), address NVARCHAR(300), created_at DATETIME DEFAULT GETDATE())""")
-    cursor.execute("""IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='activities' AND xtype='U') CREATE TABLE activities (id INT IDENTITY(1,1) PRIMARY KEY, title NVARCHAR(300) NOT NULL, description NVARCHAR(MAX), activity_date DATE, photo NVARCHAR(500), uploaded_by NVARCHAR(100), created_at DATETIME DEFAULT GETDATE())""")
+    for s in staff: cursor.execute("INSERT INTO teachers (name, designation, subject, exp, qualification, wef) VALUES (?,?,?,?,?,?)", s)
+    cursor.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, full_name TEXT, role TEXT, subject TEXT, mobile TEXT, is_active INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS students (id INTEGER PRIMARY KEY AUTOINCREMENT, enrollment_no TEXT UNIQUE, first_name TEXT, father_name TEXT, class TEXT, dob DATE, mobile TEXT, address TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS activities (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT, activity_date DATE, photo TEXT, uploaded_by TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS monthly_results (id INTEGER PRIMARY KEY AUTOINCREMENT, reg_no TEXT, month TEXT, subject TEXT, marks INTEGER, max_marks INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS admissions (id INTEGER PRIMARY KEY AUTOINCREMENT, contact_no TEXT, adm_no TEXT, name TEXT, father_name TEXT, class_name TEXT, dob DATE, residence TEXT, registration_no TEXT, status TEXT DEFAULT 'Pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, session TEXT, stream TEXT, mother_name TEXT, caste TEXT, aadhar_shilla TEXT, form_date DATE, appar_id TEXT, udise_no TEXT, ration_type TEXT, sub1 TEXT, sub2 TEXT, sub3 TEXT, sub4 TEXT, sub5 TEXT, middle_year TEXT, middle_marks TEXT, middle_per TEXT, middle_sub TEXT, middle_school TEXT, middle_re TEXT, sse_year TEXT, sse_marks TEXT, sse_per TEXT, sse_sub TEXT, sse_school TEXT, sse_re TEXT, hsp_year TEXT, hsp_marks TEXT, hsp_per TEXT, hsp_sub TEXT, hsp_school TEXT, hsp_re TEXT, aadhar_self TEXT, aadhar_father TEXT, aadhar_mother TEXT, father_occupation TEXT, father_income TEXT, bank_account TEXT, bank_ifsc TEXT, undertaking_name TEXT, undertaking_father TEXT, undertaking_ro TEXT, undertaking_class TEXT)''')
+    cursor.execute("SELECT COUNT(*) FROM users WHERE username='admin'")
+    if cursor.fetchone()[0]==0: cursor.execute("INSERT INTO users (username,password,full_name,role,is_active) VALUES (?,?,?,?,?)", ('admin','admin123','Principal','admin',1))
     conn.commit(); conn.close(); os.makedirs('static/uploads/activities', exist_ok=True)
 
 @app.route('/')
@@ -494,6 +498,9 @@ def update_admission_route(adm_no):
     finally: conn.close()
     return redirect(f'/admin/view/{adm_no}')
 
+if not os.path.exists('ghss.db'):
+    init_db()
+
 if __name__ == '__main__':
-    print("GHSS Chakrohi Server - FINAL FIXED - Running on 127.0.0.1:8080")
+    print("GHSS Chakrohi Server - SQLite")
     app.run(host='0.0.0.0',port=8080,debug=True)
