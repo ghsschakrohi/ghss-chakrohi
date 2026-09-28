@@ -9,6 +9,7 @@ import requests
 import pandas as pd
 import urllib.parse
 import time
+import sqlite3
 import pymssql
 from datetime import datetime
 
@@ -17,14 +18,11 @@ app.secret_key = 'ghss-01131502304'
 FAST2SMS_API_KEY = "DnMZlzvTrHgeQqM22KNlVYxAOpWTR61u3DLr4D9zR5JbE5rpQicF606xcCid"
 
 def get_db():
-    import pymssql
-    # TEMP - Change these to your Azure SQL details later
-    conn = pymssql.connect(
-        server='your_server.database.windows.net',
-        user='your_username',
-        password='your_password',
-        database='GHSS_Chakrohi_DB'
-    )
+    import sqlite3
+    import os
+    db_path = os.path.join(os.path.dirname(__file__), 'ghss.db')
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
     return conn
     
 def init_db():
