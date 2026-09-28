@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dashboard - GHSS Chakrohi</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{font-family:Arial;background:#f1f5f9;margin:0}
+.header{background:#1e3a8a;color:white;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.card{background:white;margin:14px;padding:20px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);overflow:auto}
+input,select,textarea{padding:9px;margin:5px;border:1px solid #cbd5e1;border-radius:5px}
+.btn{background:#1e3a8a;color:white;padding:9px 14px;border:none;border-radius:5px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-block}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #e2e8f0;padding:8px;text-align:left;font-size:12px}
+th{background:#1e3a8a;color:white;white-space:nowrap}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}.header{flex-direction:column;gap:8px}}
+.badge{padding:4px 8px;border-radius:12px;font-size:10px;font-weight:bold;color:white}
+.top-contact{background:#ffeb3b;color:#000;padding:2px 6px;border-radius:4px;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="header">
+<div><b>GHSS Chakrohi Admin</b> - {{user}} ({{role}})</div>
+<div>
+<a href="/admission" style="background:#22c55e;color:white;padding:6px 12px;border-radius:5px;text-decoration:none;font-weight:bold">+ Admission Form</a>
+<a href="/activities" style="background:#f59e0b;color:white;padding:6px 12px;border-radius:5px;text-decoration:none;font-weight:bold">📸 Activities</a>
+<a href="/" style="color:white;text-decoration:none;margin-left:10px">View Site</a> |
+<a href="/logout" style="color:white">Logout</a>
+</div>
+</div>
+
+
+
+<div class="grid4">
+<div class="card" style="border-left:5px solid #1e3a8a"><h2 style="margin:0;color:#1e3a8a">{{stats.students}}</h2><p style="margin:5px 0">Students (Approved Only)</p>
+<a href="/admin/student_report" class="btn" style="background:#f59e0b;font-size:12px;margin-top:8px">📊 View Report →</a></div>
+<div class="card" style="border-left:5px solid #059669"><h2 style="margin:0;color:#059669">{{stats.results}}</h2><p style="margin:5px 0">Results Uploaded</p></div>
+<div class="card" style="border-left:5px solid #f59e0b"><h2 style="margin:0;color:#f59e0b">{{stats.admissions}}</h2><p style="margin:5px 0">Admissions Approved</p>
+<a href="/admin/admissions" class="btn" style="background:#f59e0b;font-size:12px;margin-top:8px">📋 View All →</a>
+</div>
+<div class="card" style="border-left:5px solid #6366f1"><h2 style="margin:0;color:#6366f1">{{stats.teachers}}</h2><p style="margin:5px 0">Teachers</p></div>
+</div>
+
+{% if role|lower in ['admin','teacher','staff'] %}
+<div style="margin:12px 0;text-align:center" class="no-print">
+ </div>
+{% endif %}
+
+<div class="grid2">
+{% if role and role|lower == 'admin' %}
+<div class="card">
+<h3>👤 Create Users (Admin Only)</h3>
+<input id="new_user" placeholder="Username"><input id="new_pass" placeholder="Password">
+<select id="new_role"><option value="staff">Staff - Can upload results</option><option value="Admin">Admin - Full Access</option>
+<input id="new_mobile" placeholder="Mobile for OTP">
+<button class="btn" onclick="createUser()">Create User</button>
+<div id="userMsg" style="margin-top:8px;color:green"></div>
+
+<!-- ===== BULK UPLOAD ADMISSIONS - NEW FEATURE ===== -->
+<div class="card" style="border:2px solid green; background:#e8f5e9;">
+  <h3>📤 Bulk Upload Admissions (Excel)</h3>
+  <form action="/bulk-upload-admissions" method="POST" enctype="multipart/form-data">
+    <input type="file" name="excel_file" accept=".xlsx,.xls" required style="margin:10px 0;">
+    <button type="submit" class="btn btn-success">Upload</button>
+  </form>
+  <small>Format: GHSS_Chakrohi_Final_Upload_Template_2026.xlsx </small>
+  <div style="margin-top:10px;">
+    <a href="/download-template" class="btn btn-info btn-sm">Download Template</a>
+  </div>
+</div>
+
+<h4>Existing Users - Admin Can Edit Mobile</h4>
+<table><tr><th>Username</th><th>Full Name</th><th>Role</th><th>Mobile</th><th>Action</th></tr>
+{% for u in users %}
+<tr>
+<td>{{u.username}}</td>
+<td>{{u.full_name}}</td>
+<td>{{u.role}}</td>
+<td><b style="color:#0b3d91">{{u.mobile or '-'}}</b></td>
+<td><button onclick="updateMob('{{u.username}}','{{u.mobile}}')" style="background:#f59e0b;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold">✏️ Edit Mobile</button></td>
+</tr>
+{% endfor %}
+</table>
+</div>
+{% endif %}
+
+<div class="card">
+<h3>📊 Upload Monthly Test Result - ONLY APPROVED STUDENTS</h3>
+<p style="font-size:11px;color:#d97706;background:#fef3c7;padding:6px;border-radius:4px">⚠️ Only Approved admissions appear here. Pending admissions cannot get marks.</p>
+{% if students_for_result and students_for_result|length > 0 %}
+<form action="/api/upload_result" method="POST" style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
+<div><label>Reg No (Approved Only)*</label><br>
+<select name="reg_no" required style="min-width:200px">
+<option value="">-- Select Approved Student --</option>
+{% for s in students_for_result %}
+<option value="{{ s[0] }}">{{ s[0] }} - {{ s[1] }}</option>
+{% endfor %}
+</select>
+</div>
+<div><label>Month</label><br><input name="month" placeholder="August 2026" required></div>
+<div><label>Subject</label><br><input name="subject" placeholder="Physics" required></div>
+<div><label>Marks</label><br><input name="marks" type="number" placeholder="68" required></div>
+<div><label>Max</label><br><input name="max_marks" type="number" value="100" required></div>
+<div><button class="btn" style="background:#059669">Upload</button></div>
+</form>
+{% else %}
+<p style="color:red;font-weight:bold;padding:15px;background:#fee2e2;border-radius:6px;text-align:center">❌ No Approved Students Yet<br><small>Please Approve admissions first from below table → Then they will appear here</small></p>
+{% endif %}
+</div>
+</div>
+
+<div class="card" style="border-left:5px solid #f59e0b">
+<h3>📸 Upload School Activity Photos (Admin + Staff)</h3>
+<form action="/api/upload_activity" method="POST" enctype="multipart/form-data" style="display:flex;flex-wrap:wrap;gap:10px;align-items:end">
+<div style="flex:1"><label>Activity Title*</label><br><input name="title" placeholder="e.g. Swachh Bharat Diwas 2026" required style="width:90%"></div>
+<div><label>Date*</label><br><input name="activity_date" type="date" required></div>
+<div><label>Photo* (JPG/PNG)</label><br><input name="photo" type="file" accept="image/*" required></div>
+<div style="width:100%"><label>Description</label><br><textarea name="description" placeholder="Write about activity..." style="width:95%;height:60px"></textarea></div>
+<div><button class="btn" style="background:#f59e0b">📤 Upload Activity</button></div>
+</form>
+
+<h4>Recent Uploaded Activities ({{activities|length}})</h4>
+<table><tr><th>ID</th><th>Title</th><th>Date</th><th>Photo</th><th>By</th><th>Action</th></tr>
+{% for act in activities %}
+<tr>
+<td>{{act.id}}</td>
+<td><b>{{act.title}}</b><br><small>{{act.description[:50] if act.description else ''}}</small></td>
+<td>{{act.activity_date}}</td>
+<td>{% if act.photo %}<a href="{{act.photo}}" target="_blank"><img src="{{act.photo}}" width="50" height="40" style="object-fit:cover;border-radius:4px"></a>{% else %}-{% endif %}</td>
+<td>{{act.uploaded_by}}</td>
+<td><a href="/api/delete_activity/{{act.id}}" onclick="return confirm('Delete this activity?')" style="color:red;font-weight:bold">Delete</a></td>
+</tr>
+{% endfor %}
+</table>
+{% if not activities %}<p style="color:#666;text-align:center;padding:15px">No Activities Yet - Upload first photo</p>{% endif %}
+</div>
+
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap">
+<h3>📥 Online Admissions - PENDING for Approval (Latest 10)</h3>
+<div>
+<a href="/admin/admissions" class="btn" style="background:#0b3d91">View All ({{stats.admissions}} Approved)</a>
+<a href="/admission" class="btn" style="background:#22c55e">+ New Admission</a>
+</div>
+</div>
+<input type="text" id="searchAd" placeholder="Search Name, Adm No, Contact..." style="width:100%;max-width:400px;padding:10px;border:2px solid #1e3a8a;border-radius:6px;margin:10px 0" onkeyup="searchAdmission()">
+<div style="overflow:auto">
+<table id="admTable">
+<tr><th>ID</th><th>Adm No</th><th>Name</th><th>Class</th><th>Contact</th><th>Status</th><th>Action</th></tr>
+{% for a in admissions %}
+<tr><td>{{a.id}}</td><td><b>{{a.adm_no}}</b></td><td>{{a.name}}</td><td>{{a.class_name}}</td><td><span class="top-contact">{{a.contact_no}}</span></td><td><span class="badge" style="background:{{'#22c55e' if a.status=='Approved' else '#f59e0b'}}">{{a.status or 'Pending'}}</span></td>
+<td><a href="/api/submit_admission_view/{{a.id}}" class="btn" style="font-size:10px;padding:5px 8px;background:#0b3d91">View</a> <a href="/api/approve_admission/{{a.id}}" class="btn" style="font-size:10px;padding:5px 8px;background:#22c55e">Approve → Student</a></td></tr>
+{% endfor %}
+</table>
+</div>
+<p style="font-size:11px;color:#666;margin-top:8px">Note: Only Approved students will appear in Result upload dropdown above. Pending cannot get marks.</p>
+</div>
+
+<div class="card">
+<h3>👨‍🏫 Teachers List</h3>
+<table><tr><th>Name</th><th>Designation</th><th>Subject</th></tr>{% for t in teachers %}<tr><td>{{t.name}}</td><td>{{t.designation}}</td><td>{{t.subject}}</td></tr>{% endfor %}</table>
+</div>
+
+<script>
+function createUser(){
+ fetch('/api/create_user',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:document.getElementById('new_user').value,password:document.getElementById('new_pass').value,role:document.getElementById('new_role').value,mobile:document.getElementById('new_mobile').value})}).then(r=>r.json()).then(d=>{document.getElementById('userMsg').innerText=d.status=='ok'?'✅ User Created!':'Failed: '+d.msg; if(d.status=='ok') setTimeout(()=>location.reload(),800);});
+}
+function updateMob(username, oldMob){
+ let m = prompt("Update Mobile for "+username+" :", oldMob && oldMob!='None'? oldMob : "");
+ if(m && m.length>=10){
+  fetch('/api/update_user_mobile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username,mobile:m})}).then(r=>r.json()).then(d=>{if(d.status=='ok'){alert("✅ "+d.msg); location.reload();} else alert("❌ "+d.msg);});
+ }
+}
+function searchAdmission(){
+ let input=document.getElementById("searchAd").value.toUpperCase();
+ let tr=document.getElementById("admTable").getElementsByTagName("tr");
+ for(let i=1;i<tr.length;i++){ let txt=tr[i].innerText.toUpperCase(); tr[i].style.display=txt.includes(input)?"":"none"; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Activities - GHSS Chakrohi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{margin:0;font-family:Arial;background:#f1f5f9}
+.header{background:#002147;color:white;padding:15px;text-align:center;position:sticky;top:0;z-index:100}
+.header a{color:#ffcc00;text-decoration:none;font-weight:bold}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;padding:20px;max-width:1200px;margin:auto}
+.card{background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.1);transition:0.3s}
+.card:hover{transform:translateY(-5px)}
+.card img{width:100%;height:220px;object-fit:cover;background:#ddd}
+.info{padding:14px}
+.info b{color:#002147;font-size:15px}
+.badge{background:#f59e0b;color:white;padding:4px 10px;border-radius:20px;font-size:11px}
+</style>
+</head>
+<body>
+<div class="header">
+<h2 style="margin:5px">📸 GHSS Chakrohi - School Activities</h2>
+<p style="margin:5px;font-size:12px">UDISE 01131502304 | R S Pura, Jammu</p>
+<a href="/">← Back to Home</a> | <a href="/admin">Admin Login</a>
+</div>
+
+<div class="grid">
+{% for a in activities %}
+<div class="card">
+{% if a.photo %}
+<img src="{{a.photo}}" alt="{{a.title}}" onerror="this.src='https://via.placeholder.com/400x220?text=GHSS+Activity'">
+{% else %}
+<img src="https://via.placeholder.com/400x220?text=No+Photo">
+{% endif %}
+<div class="info">
+<b>{{a.title}}</b><br>
+<span class="badge">📅 {{a.activity_date}}</span> <small style="color:#666">By {{a.uploaded_by}}</small>
+<p style="font-size:13px;color:#444;margin:8px 0 0 0">{{a.description or ''}}</p>
+</div>
+</div>
+{% endfor %}
+</div>
+
+{% if not activities %}
+<div style="text-align:center;padding:60px 20px">
+<img src="https://cdn-icons-png.flaticon.com/512/4076/4076478.png" width="80" style="opacity:0.5"><br>
+<h3 style="color:#666">No Activities Yet</h3>
+<p>Admin can upload from Dashboard → Upload School Activity Photos</p>
+<a href="/" style="background:#002147;color:white;padding:10px 20px;border-radius:6px;text-decoration:none">Go Home</a>
+</div>
+{% endif %}
+
+<footer style="background:#002147;color:white;text-align:center;padding:15px;margin-top:30px;font-size:12px">
+© 2026 GHSS Chakrohi | UDISE 01131502304 | All Activities are Verified
+</footer>
+</body>
+</html>
