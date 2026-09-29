@@ -274,25 +274,37 @@ def check_result():
     cursor.execute("SELECT * FROM students WHERE enrollment_no =?", (reg_no,))
     student = cursor.fetchone()
     if not student:
-        return f"<div style='text-align:center;padding:80px;font-family:Arial'><h2 style='color:red'>Student {reg_no} not found in records</h2><a href='/results' style='color:#0b3d91'>← Back to Search</a></div>"
+        return f"<div style='text-align:center;padding:80px;font-family:Arial'><h2 style='color:red'>Student {reg_no} not found</h2><a href='/results'>Back</a></div>"
+    # CORRECT MAPPING using column names
+    s_dict = dict(student) if hasattr(student, 'keys') else {}
+    def get(k, idx_fallback):
+        try:
+            return student[k] if k in s_dict and s_dict[k] else (str(student[idx_fallback]) if len(student)>idx_fallback else "")
+        except:
+            return str(student[idx_fallback]) if len(student)>idx_fallback else ""
+
+    stu_name = get('first_name', 2) or "N/A"
+    father_name = get('father_name', 4) or get('father_name', 3) or "N/A"
+    class_name = get('class', 10) or get('class_name', 5) or "N/A"
+    section = get('section', 6) or ""
+    dob = get('dob', 7) or "N/A"
+    contact = get('mobile', 11) or get('contact', 8) or ""
+    if str(contact).lower() in ('none','n/a',''): contact = get('contact', 8)
 
     cursor.execute("SELECT * FROM monthly_results WHERE reg_no =? ORDER BY month, subject", (reg_no,))
     results = cursor.fetchall()
     if not results:
-        return f"<div style='text-align:center;padding:80px;font-family:Arial'><h2>No results uploaded for {reg_no}</h2><p>Contact Class Teacher</p><a href='/results'>Back</a></div>"
+        return f"<div style='text-align:center;padding:80px;font-family:Arial'><h2>No results for {reg_no}</h2><a href='/results'>Back</a></div>"
 
     total_obtained = sum([int(r[4] or 0) for r in results])
     total_max = sum([int(r[5] or 100) for r in results])
     percentage = round((total_obtained/total_max)*100, 2) if total_max else 0
     status = "PASS" if percentage >= 33 else "FAIL"
     grade = "A+" if percentage>=90 else "A" if percentage>=75 else "B+" if percentage>=60 else "B" if percentage>=50 else "C" if percentage>=33 else "F"
-
-    # Colors
     status_color = "#16a34a" if status=="PASS" else "#dc2626"
     status_bg = "#dcfce7" if status=="PASS" else "#fee2e2"
 
-    # QR Code
-    qr_data = f"GHSS CHAKROHI - VERIFIED DOCUMENT\nReg: {reg_no}\nName: {student[2]}\nClass: {student[4]}\nTotal: {total_obtained}/{total_max} {percentage}% {status}\nVerify: ghss-chakrohi.onrender.com/results"
+    qr_data = f"GHSS CHAKROHI VERIFIED\nReg:{reg_no}\nName:{stu_name}\nTotal:{total_obtained}/{total_max} {percentage}% {status}"
     qr = qrcode.QRCode(version=1, box_size=6, border=1); qr.add_data(qr_data); qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white"); buffered = io.BytesIO(); img.save(buffered, format="PNG")
     qr_b64 = base64.b64encode(buffered.getvalue()).decode()
@@ -303,87 +315,73 @@ def check_result():
         rows_html += f"<tr><td>{i}</td><td>{r[2]}</td><td>{r[3]}</td><td>{r[5]}</td><td><b>{r[4]}</b></td><td>{per}%</td></tr>"
 
     html = f"""
-    <html><head><title>GHSS Chakrohi Marksheet - {reg_no}</title><meta name="viewport" content="width=device-width, initial-scale=1">
+    <html><head><title>Marksheet {reg_no}</title><meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        @page {{ size:A4; margin:10mm }}
-        *{{box-sizing:border-box;margin:0;padding:0}}
+        @page{{size:A4;margin:10mm}} *{{box-sizing:border-box;margin:0;padding:0}}
         body{{font-family:'Inter',sans-serif;background:#e2e8f0;padding:15px;color:#1e293b}}
        .page{{background:#fff;max-width:800px;margin:0 auto;box-shadow:0 0 0 8px #0b3d91, 0 20px 50px rgba(0,0,0,0.15);border:2px solid #0b3d91;position:relative;overflow:hidden}}
-       .page:before{{content:'';position:absolute;top:0;left:0;right:0;height:8px;background:linear-gradient(90deg,#0b3d91,#3b82f6,#0b3d91)}}
-       .watermark{{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:110px;font-weight:900;color:rgba(11,61,145,0.04);letter-spacing:10px;pointer-events:none;white-space:nowrap}}
-       .header{{background:linear-gradient(135deg,#0b3d91 0%,#1e4bb8 100%);color:#fff;padding:20px 30px;display:flex;justify-content:space-between;align-items:center}}
+       .watermark{{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:110px;font-weight:900;color:rgba(11,61,145,0.04);letter-spacing:10px;pointer-events:none}}
+       .header{{background:linear-gradient(135deg,#0b3d91,#1e4bb8);color:#fff;padding:20px 30px;display:flex;justify-content:space-between;align-items:center}}
        .header-left{{display:flex;align-items:center;gap:15px}}
-       .emblem{{width:60px;height:60px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#0b3d91;font-weight:900;font-size:24px;box-shadow:0 4px 10px rgba(0,0,0,0.2)}}
-       .header h1{{font-family:'Merriweather',serif;font-size:20px;letter-spacing:0.5px}}.header p{{font-size:11px;opacity:0.9;margin-top:3px;letter-spacing:1px}}
-       .header-right{{text-align:right;font-size:11px;line-height:16px}}
+       .emblem{{width:60px;height:60px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#0b3d91;font-weight:900;font-size:24px}}
+       .header h1{{font-family:'Merriweather',serif;font-size:20px}}.header p{{font-size:11px;opacity:0.9;margin-top:3px}}
+       .header-right{{text-align:right;font-size:11px}}
        .title-bar{{background:#f1f5f9;text-align:center;padding:10px;border-bottom:2px solid #0b3d91;border-top:2px solid #0b3d91}}
        .title-bar h2{{font-size:14px;letter-spacing:3px;color:#0b3d91;font-weight:800}}.title-bar span{{font-size:11px;color:#64748b}}
-       .info-grid{{display:grid;grid-template-columns:1fr 1fr 1fr;padding:18px 30px;background:#fff;gap:15px;border-bottom:1px solid #e2e8f0}}
-       .info-item label{{font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;font-weight:600}}.info-item div{{font-size:14px;font-weight:600;margin-top:2px;color:#0f172a}}
+       .info-grid{{display:grid;grid-template-columns:1fr 1fr 1fr;padding:18px 30px;gap:15px;border-bottom:1px solid #e2e8f0}}
+       .info-item label{{font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;font-weight:600}}.info-item div{{font-size:14px;font-weight:600;margin-top:2px}}
         table{{width:100%;border-collapse:collapse}} th{{background:#0b3d91;color:#fff;padding:11px 12px;font-size:11px;letter-spacing:1px;text-transform:uppercase;text-align:left}} td{{padding:11px 12px;font-size:13px;border-bottom:1px solid #f1f5f9}} tr:nth-child(even){{background:#f8fafc}}
-       .summary{{display:grid;grid-template-columns:1.2fr 0.8fr;padding:0}}
-       .summary-left{{padding:20px 30px;background:#f8fafc}}.summary-right{{padding:20px 30px;border-left:1px solid #e2e8f0;text-align:center;background:#fff}}
-       .big-per{{font-size:42px;font-weight:800;color:#0b3d91;line-height:1}}.grade-badge{{display:inline-block;padding:6px 18px;border-radius:30px;font-weight:800;font-size:13px;margin-top:8px;background:{status_bg};color:{status_color};border:1px solid {status_color}}}
-       .total-line{{font-size:13px;margin-top:10px;line-height:22px}}
-       .qr-box img{{width:90px;height:90px;border:2px solid #0b3d91;padding:4px;border-radius:8px}}.qr-box p{{font-size:9px;color:#64748b;margin-top:5px}}
-       .footer{{padding:15px 30px;display:flex;justify-content:space-between;align-items:end;background:#fff;border-top:2px solid #0b3d91;font-size:10px;color:#64748b}}
-       .sign{{text-align:center}}.sign-line{{width:120px;height:1px;background:#1e293b;margin:30px auto 6px}}
+       .summary{{display:grid;grid-template-columns:1.2fr 0.8fr}}.summary-left{{padding:20px 30px;background:#f8fafc}}.summary-right{{padding:20px 30px;border-left:1px solid #e2e8f0;text-align:center}}
+       .big-per{{font-size:42px;font-weight:800;color:#0b3d91}}.grade-badge{{display:inline-block;padding:6px 18px;border-radius:30px;font-weight:800;font-size:13px;margin-top:8px;background:{status_bg};color:{status_color};border:1px solid {status_color}}}
+       .qr-box img{{width:90px;height:90px;border:2px solid #0b3d91;padding:4px;border-radius:8px}}.footer{{padding:15px 30px;display:flex;justify-content:space-between;align-items:end;border-top:2px solid #0b3d91;font-size:10px;color:#64748b}}.sign-line{{width:120px;height:1px;background:#1e293b;margin:30px auto 6px}}
        .btns{{max-width:800px;margin:20px auto;text-align:center;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}}
-       .btn{{padding:12px 22px;border:none;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-size:13px;box-shadow:0 4px 10px rgba(0,0,0,0.1)}}
-        @media print{{body{{background:#fff;padding:0}}.btns{{display:none}}.page{{box-shadow:none;border:1px solid #0b3d91}}}}
+       .btn{{padding:12px 22px;border:none;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;gap:6px;font-size:13px}}
+        @media print{{.btns{{display:none}} body{{background:#fff;padding:0}}.page{{box-shadow:none}}}}
     </style></head><body>
     <div class="page" id="marksheet">
         <div class="watermark">GHSS CHAKROHI</div>
         <div class="header">
-            <div class="header-left"><div class="emblem">G</div><div><h1>GOVT. HR. SEC. SCHOOL CHAKROHI</h1><p>UDISE: 01131502304 | BLOCK - AKHNOOR | JAMMU (J&K) - 181201</p></div></div>
+            <div class="header-left"><div class="emblem">G</div><div><h1>GOVT. HR. SEC. SCHOOL CHAKROHI</h1><p>UDISE: 01131502304 | BLOCK - RS Pura | JAMMU (J&K) - 181102</p></div></div>
             <div class="header-right">Academic Session<br><b style="font-size:14px">2026-27</b><br>Monthly Assessment</div>
         </div>
         <div class="title-bar"><h2>STATEMENT OF MARKS</h2><span>Computer Generated Marksheet - Valid without Signature</span></div>
         <div class="info-grid">
-            <div class="info-item"><label>Student Name</label><div>{student[2]}</div></div>
-            <div class="info-item"><label>Father's Name</label><div>{student[3]}</div></div>
+            <div class="info-item"><label>Student Name</label><div>{stu_name}</div></div>
+            <div class="info-item"><label>Father's Name</label><div>{father_name}</div></div>
             <div class="info-item"><label>Registration No</label><div style="color:#0b3d91">{reg_no}</div></div>
-            <div class="info-item"><label>Class / Section</label><div>{student[4]} {student[5] or ''}</div></div>
-            <div class="info-item"><label>Date of Birth</label><div>{student[5] or 'N/A'}</div></div>
-            <div class="info-item"><label>Contact</label><div>{student[6] or ''} {student[7] or ''}</div></div>
+            <div class="info-item"><label>Class / Section</label><div>{class_name} {section}</div></div>
+            <div class="info-item"><label>Date of Birth</label><div>{dob}</div></div>
+            <div class="info-item"><label>Contact</label><div>{contact}</div></div>
         </div>
         <table><tr><th>S.No</th><th>Month</th><th>Subject</th><th>Max Marks</th><th>Marks Obtained</th><th>%</th></tr>{rows_html}</table>
         <div class="summary">
             <div class="summary-left">
-                <div class="total-line"><b>Total Marks:</b> {total_obtained} / {total_max} &nbsp; | &nbsp; <b>Percentage:</b> {percentage}% &nbsp; | &nbsp; <b>Grade:</b> {grade}</div>
-                <div class="total-line"><b>Result:</b> <span class="grade-badge">{status} - {grade}</span> &nbsp; <span style="font-size:11px;color:#64748b;margin-left:10px">Pass Criteria: 33% minimum</span></div>
-                <div class="total-line" style="margin-top:15px;font-size:11px;color:#475569">This is a system generated marksheet for monthly tests conducted by GHSS Chakrohi. For any discrepancy, contact examination cell within 7 days. Scan QR to verify authenticity.</div>
+                <div style="font-size:13px;margin-top:5px"><b>Total Marks:</b> {total_obtained} / {total_max} &nbsp; | &nbsp; <b>Percentage:</b> {percentage}% &nbsp; | &nbsp; <b>Grade:</b> {grade}</div>
+                <div style="font-size:13px;margin-top:10px"><b>Result:</b> <span class="grade-badge">{status} - {grade}</span> <span style="font-size:11px;color:#64748b;margin-left:10px">Pass Criteria: 33% minimum</span></div>
+                <div style="margin-top:15px;font-size:11px;color:#475569">This is a system generated marksheet for monthly tests. For any discrepancy, contact examination cell within 7 days. Scan QR to verify authenticity.</div>
             </div>
             <div class="summary-right">
-                <div class="big-per">{percentage}%</div>
-                <div class="grade-badge">{status}</div>
+                <div class="big-per">{percentage}%</div><div class="grade-badge">{status}</div>
                 <div class="qr-box" style="margin-top:12px"><img src="data:image/png;base64,{qr_b64}"><p>Scan to Verify<br>{reg_no}</p></div>
             </div>
         </div>
         <div class="footer">
-            <div class="sign"><div class="sign-line"></div>Class Teacher</div>
-            <div style="text-align:center;line-height:14px">Generated on {datetime.now().strftime('%d-%m-%Y %I:%M %p')}<br>ghss-chakrohi.onrender.com | This document is digitally verified</div>
-            <div class="sign"><div class="sign-line"></div>Principal<br>GHSS Chakrohi</div>
+            <div style="text-align:center"><div class="sign-line"></div>Class Teacher</div>
+            <div style="text-align:center">Generated on {datetime.now().strftime('%d-%m-%Y %I:%M %p')}<br>ghss-chakrohi.onrender.com</div>
+            <div style="text-align:center"><div class="sign-line"></div>Principal<br>GHSS Chakrohi</div>
         </div>
     </div>
     <div class="btns">
-        <button onclick="window.print()" class="btn" style="background:#0b3d91;color:#fff">🖨️ Print Marksheet</button>
+        <button onclick="window.print()" class="btn" style="background:#0b3d91;color:#fff">🖨️ Print</button>
         <button onclick="downloadPDF()" class="btn" style="background:#16a34a;color:#fff">⬇️ Download PDF</button>
-        <a href="/results" class="btn" style="background:#fff;color:#0b3d91;border:1px solid #0b3d91">← Search Another</a>
+        <a href="/results" class="btn" style="background:#fff;color:#0b3d91;border:1px solid #0b3d91">← Search</a>
     </div>
-    <script>
-    function downloadPDF(){{
-        var el=document.getElementById('marksheet');
-        var opt={{margin:0, filename:'GHSS_{reg_no}_{percentage}pct.pdf', image:{{type:'jpeg',quality:0.98}}, html2canvas:{{scale:3, useCORS:true, backgroundColor:'#ffffff'}}, jsPDF:{{unit:'mm',format:'a4',orientation:'portrait'}}}};
-        html2pdf().set(opt).from(el).save();
-    }}
-    </script>
+    <script>function downloadPDF(){{var el=document.getElementById('marksheet');var opt={{margin:0,filename:'GHSS_{reg_no}.pdf',image:{{type:'jpeg',quality:0.98}},html2canvas:{{scale:3,useCORS:true}},jsPDF:{{unit:'mm',format:'a4',orientation:'portrait'}}}};html2pdf().set(opt).from(el).save();}}</script>
     </body></html>
     """
-    return html
-@app.route('/forgot-password', methods=['GET','POST'])
+    return html@app.route('/forgot-password', methods=['GET','POST'])
 def forgot_password():
     if request.method == 'POST':
         username = request.form.get('username','').strip()
