@@ -44,13 +44,34 @@ def close_connection(exception):
         db.close()
 
 def init_db():
-    conn = get_db_direct(); cursor = conn.cursor()
-    # Auto-create principal admin
+    conn = sqlite3.connect(DATABASE)
     cur = conn.cursor()
+    
+    # 1. First create users table
+    cur.execute('''CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        role TEXT NOT NULL
+    )''')
+    
+    # 2. Create other tables (students, results etc - keep your existing CREATE TABLE lines here)
+    cur.execute('''CREATE TABLE IF NOT EXISTS students (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT, class TEXT, roll_no TEXT, 
+        parentage TEXT, address TEXT, photo TEXT
+    )''')
+
+    # 3. AFTER tables are created, now check admin
     cur.execute("SELECT * FROM users WHERE username='principal'")
     if not cur.fetchone():
         cur.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", 
-                ('principal', 'admin123', 'admin'))
+                    ('principal', 'admin123', 'admin'))
+        print("Admin user principal created!")
+
+    conn.commit()
+    conn.close()
+    print("DB init done")
         
     cursor.execute("DROP TABLE IF EXISTS teachers")
     cursor.execute('''CREATE TABLE teachers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, designation TEXT, subject TEXT, exp TEXT, qualification TEXT, wef TEXT)''')
