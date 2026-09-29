@@ -495,11 +495,13 @@ def update_admission_route(adm_no):
     except Exception as e: print(f"Update error {e}")
     return redirect(f'/admin/view/{adm_no}')
 
+# Auto-create DB on Render startup (for gunicorn)
+print("Checking DB...")
+if not os.path.exists(DATABASE):
+    print("Creating school.db first time...")
+    init_db()
+    print("school.db created")
+
 if __name__ == '__main__':
-    # Create DB if not exists first time
-    if not os.path.exists(DATABASE):
-        print("Creating school.db first time...")
-        init_db()
-        print("school.db created - 29 teachers inserted")
-    print("GHSS Chakrohi Server - SQLite - 24x7 Ready - Running on 127.0.0.1:8080")
+    print("GHSS Chakrohi Server - SQLite - Running on 127.0.0.1:8080")
     app.run(host='0.0.0.0',port=8080,debug=True)
