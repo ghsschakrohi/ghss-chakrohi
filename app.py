@@ -43,36 +43,6 @@ def close_connection(exception):
     if db is not None:
         db.close()
 
-def init_db():
-    conn = sqlite3.connect(DATABASE)
-    cur = conn.cursor()
-    
-    # 1. First create users table
-    cur.execute('''CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        role TEXT NOT NULL
-    )''')
-    
-    # 2. Create other tables (students, results etc - keep your existing CREATE TABLE lines here)
-    cur.execute('''CREATE TABLE IF NOT EXISTS students (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT, class TEXT, roll_no TEXT, 
-        parentage TEXT, address TEXT, photo TEXT
-    )''')
-
-    # 3. AFTER tables are created, now check admin
-    cur.execute("SELECT * FROM users WHERE username='principal'")
-    if not cur.fetchone():
-        cur.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", 
-                    ('principal', 'admin123', 'admin'))
-        print("Admin user principal created!")
-
-    conn.commit()
-    conn.close()
-    print("DB init done")
-        
     cursor.execute("DROP TABLE IF EXISTS teachers")
     cursor.execute('''CREATE TABLE teachers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, designation TEXT, subject TEXT, exp TEXT, qualification TEXT, wef TEXT)''')
     staff = [('Mrs. Pushpa Lochan', 'Principal', 'Administration', '25', 'Masters,B.Ed', ''),('Mr. Gurmeet Singh', 'Sr. Lect Sociology - Vice Principal', 'Sociology', '18', 'Masters, M.Phil,B.Ed', ''),('Mr. Daleep Sharma', 'Sr. Lect Urdu', 'Urdu', '18', 'Masters, P.hd, B.Ed', ''),('Mr. Harveen Singh Sudan', 'Sr. Lect Political Science', 'Pol. Science', '16', 'Masters, M.Phil, B.Ed', ''),('Mrs. Neeru Ratta', 'Sr. Lect Education', 'Education', '16', 'Masters, M.Phil,B.Ed ', ''),('Mrs. Bindu Devi', 'Sr. Lect Zoology', 'Zoology', '16', 'Masters, B.Ed', ''),('Mrs. Bindu Dogra', 'Sr. Lect Hindi', 'Hindi', '16', 'Masters, NET, B.Ed', ''),('Mr. Paramjit Singh', 'Sr. Lect Computer Science', 'Computer Science', '17', 'MCA, M.Phil, B.Ed', '26-01-2023'),('Mrs. Shammi Chib', 'Lecturer Physics', 'Physics', '22', 'M.Sc, B.Ed', ''),('Mr. Shakti Kumar', 'Lecturer Chemistry', 'Chemistry', '33', 'M.Sc, B.Ed', ''),('Mrs. Alka', 'Lecturer English', 'English', '-', 'M.A, B.Ed', ''),('Mrs. Darshan Kour', 'I/C Lect Electronics', 'Electronics', '26', 'M.Sc, B.Ed', ''),('Mr. Rajesh Gupta', 'I/C Lect Botany', 'Botany', '22', 'M.Sc, B.Ed', ''),('Mrs. Ravinder Kour', 'I/C Lect Maths', 'Mathematics', '22', 'M.Sc, B.Ed', ''),('Mrs. Neelam Sudan', 'Master', 'General', '22', 'Masters, B.Ed', ''),('Mr. Ram Lal', 'Master', 'General', '19', 'Masters, B.Ed', ''),('Mr. Shariq Ishaq Mir', 'Teacher', 'General', '19', 'MA, B.Ed', ''),('Mr. Rohit Gupta', 'Teacher', 'General', '10', 'M.Sc, B.Ed', ''),('Mrs. Indu Gandhi', 'Teacher', 'General', '10', 'M.A, B.Ed', ''),('Mr. Sudansh Sharma', 'Teacher', 'General', '10', 'M.Sc, B.Ed', ''),('Mrs. Meenakshi Gupta', 'Teacher', 'General', '10', 'M.A, B.Ed', ''),('Mrs. Rasmeet Kour', 'Teacher', 'General', '10', 'M.Sc, B.Ed', ''),('Mrs. Devinder Kour', 'Sr. Assistant', 'Non-Teaching', '10', 'Graduate', ''),('Mr. Karanjeet Kumar', 'Lab. Assistant', 'Non-Teaching', '20', '12th', ''),('Mr. Rakesh Sharma', 'Lab Assistant', 'Non-Teaching', '20', '12th', ''),('Mrs. Asha Devi', 'Class-IV', 'Non-Teaching', '18', '', ''),('Mrs. Reena Devi', 'Class-IV', 'Non-Teaching', '12', '', ''),('Mr. Ravinder Choudhary', 'Class-IV', 'Non-Teaching', '10', '', ''),('Mr. Shubdeep Akash', 'Class-IV', 'Non-Teaching', '5', 'MA', ''),]
@@ -83,7 +53,10 @@ def init_db():
     cursor.execute("""CREATE TABLE IF NOT EXISTS activities (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT, activity_date DATE, photo TEXT, uploaded_by TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
     cursor.execute("""CREATE TABLE IF NOT EXISTS monthly_results (id INTEGER PRIMARY KEY AUTOINCREMENT, reg_no TEXT, month TEXT, subject TEXT, marks INTEGER, max_marks INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
     cursor.execute("""CREATE TABLE IF NOT EXISTS admissions (id INTEGER PRIMARY KEY AUTOINCREMENT, contact_no TEXT, aadhar_shilla TEXT, form_date DATE, session TEXT, class_name TEXT, adm_no TEXT, stream TEXT, appar_id TEXT, udise_no TEXT, name TEXT, father_name TEXT, mother_name TEXT, dob DATE, residence TEXT, caste TEXT, registration_no TEXT, ration_type TEXT, sub1 TEXT, sub2 TEXT, sub3 TEXT, sub4 TEXT, sub5 TEXT, middle_year TEXT, middle_marks TEXT, middle_per TEXT, middle_sub TEXT, middle_school TEXT, middle_re TEXT, sse_year TEXT, sse_marks TEXT, sse_per TEXT, sse_sub TEXT, sse_school TEXT, sse_re TEXT, hsp_year TEXT, hsp_marks TEXT, hsp_per TEXT, hsp_sub TEXT, hsp_school TEXT, hsp_re TEXT, aadhar_self TEXT, aadhar_father TEXT, aadhar_mother TEXT, father_occupation TEXT, father_income TEXT, bank_account TEXT, bank_ifsc TEXT, undertaking_name TEXT, undertaking_father TEXT, undertaking_ro TEXT, undertaking_class TEXT, status TEXT DEFAULT 'Pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
-
+    
+    cursor.execute("SELECT * FROM users WHERE username='principal'")
+        if not cursor.fetchone():
+    cursor.execute("INSERT INTO users (username, password, full_name, role) VALUES ('principal', 'admin123', 'Principal', 'admin')")
     conn.commit(); conn.close(); os.makedirs('static/uploads/activities', exist_ok=True)
 
 @app.route('/')
