@@ -1,6 +1,6 @@
 Flask
-qrcode[pil]
+qrcode
+pandas
 openpyxl
 requests
-pandas
 gunicorn
