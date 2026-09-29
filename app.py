@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, send_file, g
 import sqlite3
-import qrcode
 import os
 import io
 import base64
@@ -10,7 +9,6 @@ try:
     import pandas as pd
 except:
     pd = None
-
 try:
     import qrcode
 except:
@@ -23,17 +21,21 @@ app = Flask(__name__)
 app.secret_key = 'ghss-01131502304'
 FAST2SMS_API_KEY = "DnMZlzvTrHgeQqM22KNlVYxAOpWTR61u3DLr4D9zR5JbE5rpQicF606xcCid"
 DATABASE = 'school.db'
+
 def init_db():
     conn = sqlite3.connect(DATABASE)
     cur = conn.cursor()
-    
+
     cur.execute("""CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        username TEXT UNIQUE, 
-        password TEXT, 
-        full_name TEXT, 
-        role TEXT, 
-        subject TEXT
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT,
+        full_name TEXT,
+        role TEXT,
+        subject TEXT,
+        mobile TEXT,
+        is_active INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )""")
 
     cur.execute("""CREATE TABLE IF NOT EXISTS students (
@@ -46,18 +48,103 @@ def init_db():
         section TEXT,
         dob TEXT,
         contact TEXT,
-        address TEXT
+        address TEXT,
+        class TEXT,
+        mobile TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )""")
 
-    # Check if principal exists, if not create it
+    cur.execute("""CREATE TABLE IF NOT EXISTS teachers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        designation TEXT,
+        subject TEXT,
+        exp TEXT,
+        qualification TEXT,
+        wef TEXT
+    )""")
+
+    cur.execute("""CREATE TABLE IF NOT EXISTS activities (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT,
+        activity_date DATE,
+        photo TEXT,
+        uploaded_by TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )""")
+
+    cur.execute("""CREATE TABLE IF NOT EXISTS monthly_results (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        reg_no TEXT,
+        month TEXT,
+        subject TEXT,
+        marks INTEGER,
+        max_marks INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )""")
+
+    cur.execute("""CREATE TABLE IF NOT EXISTS admissions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        contact_no TEXT, aadhar_shilla TEXT, form_date DATE, session TEXT, class_name TEXT,
+        adm_no TEXT, stream TEXT, appar_id TEXT, udise_no TEXT, name TEXT, father_name TEXT,
+        mother_name TEXT, dob DATE, residence TEXT, caste TEXT, registration_no TEXT,
+        ration_type TEXT, sub1 TEXT, sub2 TEXT, sub3 TEXT, sub4 TEXT, sub5 TEXT,
+        middle_year TEXT, middle_marks TEXT, middle_per TEXT, middle_sub TEXT, middle_school TEXT, middle_re TEXT,
+        sse_year TEXT, sse_marks TEXT, sse_per TEXT, sse_sub TEXT, sse_school TEXT, sse_re TEXT,
+        hsp_year TEXT, hsp_marks TEXT, hsp_per TEXT, hsp_sub TEXT, hsp_school TEXT, hsp_re TEXT,
+        aadhar_self TEXT, aadhar_father TEXT, aadhar_mother TEXT, father_occupation TEXT,
+        father_income TEXT, bank_account TEXT, bank_ifsc TEXT, undertaking_name TEXT,
+        undertaking_father TEXT, undertaking_ro TEXT, undertaking_class TEXT,
+        status TEXT DEFAULT 'Pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )""")
+
     cur.execute("SELECT * FROM users WHERE username='principal'")
     if not cur.fetchone():
-        cur.execute("INSERT INTO users (username, password, full_name, role) VALUES (?, ?, ?, ?)", 
-                    ('principal', 'admin123', 'Principal', 'admin'))
+        cur.execute("INSERT INTO users (username, password, full_name, role, is_active) VALUES (?,?,?,?,?)",
+                    ('principal', 'admin123', 'Principal', 'admin', 1))
         print("Admin user principal created!")
+
+    cur.execute("SELECT COUNT(*) FROM teachers")
+    if cur.fetchone()[0] == 0:
+        staff = [
+            ('Mrs. Pushpa Lochan', 'Principal', 'Administration', '25', 'Masters,B.Ed', ''),
+            ('Mr. Gurmeet Singh', 'Sr. Lect Sociology - Vice Principal', 'Sociology', '18', 'Masters, M.Phil,B.Ed', ''),
+            ('Mr. Daleep Sharma', 'Sr. Lect Urdu', 'Urdu', '18', 'Masters, P.hd, B.Ed', ''),
+            ('Mr. Harveen Singh Sudan', 'Sr. Lect Political Science', 'Pol. Science', '16', 'Masters, M.Phil, B.Ed', ''),
+            ('Mrs. Neeru Ratta', 'Sr. Lect Education', 'Education', '16', 'Masters, M.Phil,B.Ed ', ''),
+            ('Mrs. Bindu Devi', 'Sr. Lect Zoology', 'Zoology', '16', 'Masters, B.Ed', ''),
+            ('Mrs. Bindu Dogra', 'Sr. Lect Hindi', 'Hindi', '16', 'Masters, NET, B.Ed', ''),
+            ('Mr. Paramjit Singh', 'Sr. Lect Computer Science', 'Computer Science', '17', 'MCA, M.Phil, B.Ed', '26-01-2023'),
+            ('Mrs. Shammi Chib', 'Lecturer Physics', 'Physics', '22', 'M.Sc, B.Ed', ''),
+            ('Mr. Shakti Kumar', 'Lecturer Chemistry', 'Chemistry', '33', 'M.Sc, B.Ed', ''),
+            ('Mrs. Alka', 'Lecturer English', 'English', '-', 'M.A, B.Ed', ''),
+            ('Mrs. Darshan Kour', 'I/C Lect Electronics', 'Electronics', '26', 'M.Sc, B.Ed', ''),
+            ('Mr. Rajesh Gupta', 'I/C Lect Botany', 'Botany', '22', 'M.Sc, B.Ed', ''),
+            ('Mrs. Ravinder Kour', 'I/C Lect Maths', 'Mathematics', '22', 'M.Sc, B.Ed', ''),
+            ('Mrs. Neelam Sudan', 'Master', 'General', '22', 'Masters, B.Ed', ''),
+            ('Mr. Ram Lal', 'Master', 'General', '19', 'Masters, B.Ed', ''),
+            ('Mr. Shariq Ishaq Mir', 'Teacher', 'General', '19', 'MA, B.Ed', ''),
+            ('Mr. Rohit Gupta', 'Teacher', 'General', '10', 'M.Sc, B.Ed', ''),
+            ('Mrs. Indu Gandhi', 'Teacher', 'General', '10', 'M.A, B.Ed', ''),
+            ('Mr. Sudansh Sharma', 'Teacher', 'General', '10', 'M.Sc, B.Ed', ''),
+            ('Mrs. Meenakshi Gupta', 'Teacher', 'General', '10', 'M.A, B.Ed', ''),
+            ('Mrs. Rasmeet Kour', 'Teacher', 'General', '10', 'M.Sc, B.Ed', ''),
+            ('Mrs. Devinder Kour', 'Sr. Assistant', 'Non-Teaching', '10', 'Graduate', ''),
+            ('Mr. Karanjeet Kumar', 'Lab. Assistant', 'Non-Teaching', '20', '12th', ''),
+            ('Mr. Rakesh Sharma', 'Lab Assistant', 'Non-Teaching', '20', '12th', ''),
+            ('Mrs. Asha Devi', 'Class-IV', 'Non-Teaching', '18', '', ''),
+            ('Mrs. Reena Devi', 'Class-IV', 'Non-Teaching', '12', '', ''),
+            ('Mr. Ravinder Choudhary', 'Class-IV', 'Non-Teaching', '10', '', ''),
+            ('Mr. Shubdeep Akash', 'Class-IV', 'Non-Teaching', '5', 'MA', ''),
+        ]
+        for s in staff:
+            cur.execute("INSERT INTO teachers (name, designation, subject, exp, qualification, wef) VALUES (?,?,?,?,?,?)", s)
+        print(f"{len(staff)} teachers inserted")
 
     conn.commit()
     conn.close()
+    os.makedirs('static/uploads/activities', exist_ok=True)
     print("DB init done")
 
 def get_db():
@@ -67,31 +154,11 @@ def get_db():
         db.row_factory = sqlite3.Row
     return db
 
-# For functions outside request (like init_db)
-def get_db_direct():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
-
 @app.teardown_appcontext
 def close_connection(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
-
-   
-   # cursor.execute('''CREATE TABLE teachers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, designation TEXT, subject TEXT, exp TEXT, qualification TEXT, wef TEXT)''')
-    staff = [('Mrs. Pushpa Lochan', 'Principal', 'Administration', '25', 'Masters,B.Ed', ''),('Mr. Gurmeet Singh', 'Sr. Lect Sociology - Vice Principal', 'Sociology', '18', 'Masters, M.Phil,B.Ed', ''),('Mr. Daleep Sharma', 'Sr. Lect Urdu', 'Urdu', '18', 'Masters, P.hd, B.Ed', ''),('Mr. Harveen Singh Sudan', 'Sr. Lect Political Science', 'Pol. Science', '16', 'Masters, M.Phil, B.Ed', ''),('Mrs. Neeru Ratta', 'Sr. Lect Education', 'Education', '16', 'Masters, M.Phil,B.Ed ', ''),('Mrs. Bindu Devi', 'Sr. Lect Zoology', 'Zoology', '16', 'Masters, B.Ed', ''),('Mrs. Bindu Dogra', 'Sr. Lect Hindi', 'Hindi', '16', 'Masters, NET, B.Ed', ''),('Mr. Paramjit Singh', 'Sr. Lect Computer Science', 'Computer Science', '17', 'MCA, M.Phil, B.Ed', '26-01-2023'),('Mrs. Shammi Chib', 'Lecturer Physics', 'Physics', '22', 'M.Sc, B.Ed', ''),('Mr. Shakti Kumar', 'Lecturer Chemistry', 'Chemistry', '33', 'M.Sc, B.Ed', ''),('Mrs. Alka', 'Lecturer English', 'English', '-', 'M.A, B.Ed', ''),('Mrs. Darshan Kour', 'I/C Lect Electronics', 'Electronics', '26', 'M.Sc, B.Ed', ''),('Mr. Rajesh Gupta', 'I/C Lect Botany', 'Botany', '22', 'M.Sc, B.Ed', ''),('Mrs. Ravinder Kour', 'I/C Lect Maths', 'Mathematics', '22', 'M.Sc, B.Ed', ''),('Mrs. Neelam Sudan', 'Master', 'General', '22', 'Masters, B.Ed', ''),('Mr. Ram Lal', 'Master', 'General', '19', 'Masters, B.Ed', ''),('Mr. Shariq Ishaq Mir', 'Teacher', 'General', '19', 'MA, B.Ed', ''),('Mr. Rohit Gupta', 'Teacher', 'General', '10', 'M.Sc, B.Ed', ''),('Mrs. Indu Gandhi', 'Teacher', 'General', '10', 'M.A, B.Ed', ''),('Mr. Sudansh Sharma', 'Teacher', 'General', '10', 'M.Sc, B.Ed', ''),('Mrs. Meenakshi Gupta', 'Teacher', 'General', '10', 'M.A, B.Ed', ''),('Mrs. Rasmeet Kour', 'Teacher', 'General', '10', 'M.Sc, B.Ed', ''),('Mrs. Devinder Kour', 'Sr. Assistant', 'Non-Teaching', '10', 'Graduate', ''),('Mr. Karanjeet Kumar', 'Lab. Assistant', 'Non-Teaching', '20', '12th', ''),('Mr. Rakesh Sharma', 'Lab Assistant', 'Non-Teaching', '20', '12th', ''),('Mrs. Asha Devi', 'Class-IV', 'Non-Teaching', '18', '', ''),('Mrs. Reena Devi', 'Class-IV', 'Non-Teaching', '12', '', ''),('Mr. Ravinder Choudhary', 'Class-IV', 'Non-Teaching', '10', '', ''),('Mr. Shubdeep Akash', 'Class-IV', 'Non-Teaching', '5', 'MA', ''),]
-    for s in staff: cursor.execute("INSERT INTO teachers (name, designation, subject, exp, qualification, wef) VALUES (?,?,?,?,?,?)", s)
-
-    cursor.execute("""CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, full_name TEXT, role TEXT, subject TEXT, mobile TEXT, is_active INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
-    cursor.execute("""CREATE TABLE IF NOT EXISTS students (id INTEGER PRIMARY KEY AUTOINCREMENT, enrollment_no TEXT UNIQUE, first_name TEXT, father_name TEXT, class TEXT, dob DATE, mobile TEXT, address TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
-    cursor.execute("""CREATE TABLE IF NOT EXISTS activities (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT, activity_date DATE, photo TEXT, uploaded_by TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
-    cursor.execute("""CREATE TABLE IF NOT EXISTS monthly_results (id INTEGER PRIMARY KEY AUTOINCREMENT, reg_no TEXT, month TEXT, subject TEXT, marks INTEGER, max_marks INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
-    cursor.execute("""CREATE TABLE IF NOT EXISTS admissions (id INTEGER PRIMARY KEY AUTOINCREMENT, contact_no TEXT, aadhar_shilla TEXT, form_date DATE, session TEXT, class_name TEXT, adm_no TEXT, stream TEXT, appar_id TEXT, udise_no TEXT, name TEXT, father_name TEXT, mother_name TEXT, dob DATE, residence TEXT, caste TEXT, registration_no TEXT, ration_type TEXT, sub1 TEXT, sub2 TEXT, sub3 TEXT, sub4 TEXT, sub5 TEXT, middle_year TEXT, middle_marks TEXT, middle_per TEXT, middle_sub TEXT, middle_school TEXT, middle_re TEXT, sse_year TEXT, sse_marks TEXT, sse_per TEXT, sse_sub TEXT, sse_school TEXT, sse_re TEXT, hsp_year TEXT, hsp_marks TEXT, hsp_per TEXT, hsp_sub TEXT, hsp_school TEXT, hsp_re TEXT, aadhar_self TEXT, aadhar_father TEXT, aadhar_mother TEXT, father_occupation TEXT, father_income TEXT, bank_account TEXT, bank_ifsc TEXT, undertaking_name TEXT, undertaking_father TEXT, undertaking_ro TEXT, undertaking_class TEXT, status TEXT DEFAULT 'Pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
-    
-   
-    conn.commit(); conn.close(); os.makedirs('static/uploads/activities', exist_ok=True)
 
 @app.route('/')
 def home():
@@ -228,16 +295,16 @@ def check_result():
     <style>
         *{{box-sizing:border-box;margin:0;padding:0}}
         body{{font-family:'Segoe UI',Arial,sans-serif;background:#f1f5f9;padding:20px}}
-     .sheet{{background:#fff;max-width:750px;margin:0 auto;border:1px solid #0b3d91;border-radius:8px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,0.1)}}
-     .header{{background:#0b3d91;color:#fff;padding:18px 22px;text-align:center}}
-     .header h1{{font-size:20px}}.header p{{font-size:12px;opacity:0.9;margin-top:4px}}
-     .student-box{{display:flex;justify-content:space-between;padding:16px 22px;background:#f8fafc;border-bottom:1px solid #e2e8f0;flex-wrap:wrap;gap:10px}}
-     .student-box div{{font-size:13px;line-height:20px}}.student-box b{{color:#0b3d91}}
+   .sheet{{background:#fff;max-width:750px;margin:0 auto;border:1px solid #0b3d91;border-radius:8px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,0.1)}}
+   .header{{background:#0b3d91;color:#fff;padding:18px 22px;text-align:center}}
+   .header h1{{font-size:20px}}.header p{{font-size:12px;opacity:0.9;margin-top:4px}}
+   .student-box{{display:flex;justify-content:space-between;padding:16px 22px;background:#f8fafc;border-bottom:1px solid #e2e8f0;flex-wrap:wrap;gap:10px}}
+   .student-box div{{font-size:13px;line-height:20px}}.student-box b{{color:#0b3d91}}
         table{{width:100%;border-collapse:collapse}} th{{background:#0b3d91;color:#fff;padding:10px 12px;font-size:12px;text-align:left}} td{{padding:10px 12px;font-size:13px;border-bottom:1px solid #e2e8f0}}
-     .total-bar{{display:flex;justify-content:space-between;align-items:center;padding:14px 22px;background:#f8fafc;border-top:2px solid #0b3d91;flex-wrap:wrap;gap:12px}}
-     .badge{{padding:6px 14px;border-radius:20px;font-weight:bold;font-size:12px;color:#fff;background:{badge_color}}}
-     .qr-area{{display:flex;align-items:center;gap:18px}}.qr-area img{{width:85px;height:85px;border:1px solid #ddd;padding:3px;background:#fff}}
-     .btns{{max-width:750px;margin:18px auto;text-align:center}}.btn{{padding:10px 20px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;margin:5px;text-decoration:none;display:inline-block;font-size:13px}}
+   .total-bar{{display:flex;justify-content:space-between;align-items:center;padding:14px 22px;background:#f8fafc;border-top:2px solid #0b3d91;flex-wrap:wrap;gap:12px}}
+   .badge{{padding:6px 14px;border-radius:20px;font-weight:bold;font-size:12px;color:#fff;background:{badge_color}}}
+   .qr-area{{display:flex;align-items:center;gap:18px}}.qr-area img{{width:85px;height:85px;border:1px solid #ddd;padding:3px;background:#fff}}
+   .btns{{max-width:750px;margin:18px auto;text-align:center}}.btn{{padding:10px 20px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;margin:5px;text-decoration:none;display:inline-block;font-size:13px}}
         @media print{{.btns{{display:none}}}}
     </style></head><body>
     <div class="sheet" id="marksheet">
@@ -320,22 +387,18 @@ def delete_admission(id):
 def approve_admission(adm_no):
     if not session.get('admin'): return redirect('/admin')
     conn = get_db(); cursor = conn.cursor()
+    cursor.execute("UPDATE admissions SET status='Approved' WHERE adm_no=?", (adm_no,)); conn.commit()
     try:
-        cursor.execute("UPDATE admissions SET status='Approved' WHERE adm_no=?", (adm_no,))
+        cursor.execute("INSERT INTO students (enrollment_no, first_name, father_name, class) SELECT adm_no, name, father_name, class_name FROM admissions WHERE adm_no=? AND adm_no NOT IN (SELECT enrollment_no FROM students)", (adm_no,))
         conn.commit()
-        try:
-            cursor.execute("INSERT INTO students (enrollment_no, first_name, father_name, class) SELECT adm_no, name, father_name, class_name FROM admissions WHERE adm_no=? AND adm_no NOT IN (SELECT enrollment_no FROM students)", (adm_no,))
-            conn.commit()
-        except Exception as e: print(f"Student insert skip: {e}")
-    except Exception as e: print(f"Approve error: {e}")
+    except: pass
     return redirect('/admin/admissions')
 
 @app.route('/admin/reject/<adm_no>')
 def reject_admission(adm_no):
     if not session.get('admin'): return redirect('/admin')
     conn = get_db(); cursor = conn.cursor()
-    cursor.execute("UPDATE admissions SET status='Rejected' WHERE adm_no=?", (adm_no,))
-    conn.commit()
+    cursor.execute("UPDATE admissions SET status='Rejected' WHERE adm_no=?", (adm_no,)); conn.commit()
     return redirect('/admin/admissions')
 
 @app.route('/api/submit_admission_view/<int:id>')
@@ -347,8 +410,7 @@ def view_admission_by_id(id):
     if not row: return "Record not found"
     cols = [d[0] for d in cursor.description]
     data = dict(zip(cols, row))
-    adm_no = data.get('adm_no')
-    return render_template('admission_view.html', data=data, adm_no=adm_no, user=session.get('full_name'))
+    return render_template('admission_view.html', data=data, adm_no=data.get('adm_no'), user=session.get('full_name'))
 
 @app.route('/admin/view/<adm_no>')
 def view_admission(adm_no):
@@ -537,13 +599,13 @@ def update_admission_route(adm_no):
     except Exception as e: print(f"Update error {e}")
     return redirect(f'/admin/view/{adm_no}')
 
-# Auto-create DB on Render startup (for gunicorn)
+# Startup - Create DB if missing
 print("Checking DB...")
 if not os.path.exists(DATABASE):
     print("Creating school.db first time...")
     init_db()
-    print("school.db created")
+else:
+    init_db()
 
 if __name__ == '__main__':
-    print("GHSS Chakrohi Server - SQLite - Running on 127.0.0.1:8080")
-    app.run(host='0.0.0.0',port=8080,debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=True)
