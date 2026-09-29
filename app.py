@@ -337,7 +337,7 @@ def check_result():
     <div class="page" id="marksheet">
         <div class="watermark">GHSS CHAKROHI</div>
         <div class="header">
-            <div class="header-left"><div class="emblem">G</div><div><h1>GOVT. HR. SEC. SCHOOL CHAKROHI</h1><p>UDISE: 01131502304 | BLOCK - RS Pura | JAMMU (J&K) - 181102</p></div></div>
+            <div class="header-left"><div class="emblem">G</div><div><h1>GOVT. HR. SEC. SCHOOL CHAKROHI</h1><p>UDISE: 01131502304 | BLOCK - AKHNOOR | JAMMU (J&K) - 181201</p></div></div>
             <div class="header-right">Academic Session<br><b style="font-size:14px">2026-27</b><br>Monthly Assessment</div>
         </div>
         <div class="title-bar"><h2>STATEMENT OF MARKS</h2><span>Computer Generated Marksheet - Valid without Signature</span></div>
@@ -382,10 +382,7 @@ def check_result():
     </script>
     </body></html>
     """
-    return html    except Exception as e:
-        import traceback
-        return f"<h2>Error: {str(e)}</h2><pre>{traceback.format_exc()}</pre><a href='/results'>Back</a>"    return html@app.route('/forgot-password', methods=['GET','POST'])
-def forgot_password():
+    return htmldef forgot_password():
     if request.method == 'POST':
         username = request.form.get('username','').strip()
         conn = get_db(); cursor = conn.cursor(); cursor.execute("SELECT mobile FROM users WHERE username=? AND is_active=1", (username,)); row = cursor.fetchone()
