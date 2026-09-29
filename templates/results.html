@@ -1,26 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Check Result - GHSS Chakrohi</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GHSS Chakrohi - Check Result</title>
 <style>
-body{font-family:Arial; background:#f0f4ff; display:flex; justify-content:center; align-items:center; height:100vh; margin:0}
-.box{background:white; padding:30px; border-radius:12px; box-shadow:0 4px 20px #0001; width:350px; text-align:center}
-input{width:90%; padding:12px; margin:15px 0; border:1px solid #ccc; border-radius:6px; font-size:16px}
-button{width:95%; padding:12px; background:#0b3d91; color:white; border:none; border-radius:6px; font-size:16px; cursor:pointer}
-button:hover{background:#082a63}
+body{font-family:'Segoe UI',Arial;background:#eef2ff;margin:0;padding:20px;display:flex;justify-content:center;align-items:center;min-height:100vh}
+.card{background:#fff;max-width:420px;width:100%;padding:30px;border-radius:16px;box-shadow:0 10px 30px rgba(11,61,145,0.15);border-top:6px solid #0b3d91;text-align:center}
+.logo{width:80px;height:80px;background:#0b3d91;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 15px;font-size:30px;font-weight:bold}
+h2{color:#0b3d91;margin:0 0 5px}.sub{color:#64748b;font-size:13px;margin-bottom:25px}
+input{width:100%;padding:14px 16px;border:2px solid #e2e8f0;border-radius:10px;font-size:16px;outline:none;transition:0.2s;text-transform:uppercase;letter-spacing:1px;box-sizing:border-box}
+input:focus{border-color:#0b3d91}
+button{width:100%;padding:14px;background:#0b3d91;color:#fff;border:none;border-radius:10px;font-weight:bold;font-size:15px;margin-top:15px;cursor:pointer;transition:0.2s}
+button:hover{background:#082f70}
+.note{font-size:11px;color:#94a3b8;margin-top:15px}
 </style>
 </head>
 <body>
-<div class="box">
-<h2 style="color:#0b3d91;">GHSS Chakrohi</h2>
-<p>Check Monthly Result</p>
+<div class="card">
+<div class="logo">G</div>
+<h2>GHSS CHAKROHI</h2>
+<div class="sub">UDISE: 01131502304 | Monthly Test Result 2026-27</div>
 <form action="/api/check_result" method="POST">
-<input name="reg_no" placeholder="Enter Reg No e.g. G2021" required>
-<button type="submit">Check Result</button>
+<input name="reg_no" placeholder="Enter Registration No" required>
+<button type="submit">🔍 VIEW MARKSHEET</button>
 </form>
-<br>
-<a href="/">← Back to Home</a>
+<div class="note">Enter PEN / Registration No. as in School Records<br>Example: GHSS20251234</div>
 </div>
 </body>
 </html>
