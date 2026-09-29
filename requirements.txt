@@ -1,7 +1,5 @@
 Flask
 gunicorn
-qrcode
+
 Pillow
-pandas
-openpyxl
-requests
+
