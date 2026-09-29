@@ -6,7 +6,15 @@ import io
 import base64
 import random
 import requests
-import pandas as pd
+try:
+    import pandas as pd
+except:
+    pd = None
+
+try:
+    import qrcode
+except:
+    qrcode = None
 import urllib.parse
 import time
 from datetime import datetime
