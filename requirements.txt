@@ -1,5 +1,5 @@
 Flask
 gunicorn
-
+qrcode
 Pillow
-
+requests
