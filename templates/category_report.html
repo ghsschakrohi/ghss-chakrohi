@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Category & Gender Report - GHSS Chakrohi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{font-family:Segoe UI;background:#f1f5f9;margin:0;padding:20px}
+.card{background:#fff;border-radius:10px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+h2{color:#0b3d91}
+.badge{padding:6px 12px;border-radius:20px;color:#fff;font-weight:bold;font-size:13px}
+table{width:100%;border-collapse:collapse;margin-top:10px} th{background:#0b3d91;color:#fff;padding:10px;text-align:left} td{padding:10px;border-bottom:1px solid #e2e8f0}
+</style>
+</head>
+<body>
+<div style="max-width:1100px;margin:0 auto">
+<a href="/admin/dashboard" style="text-decoration:none">← Back to Dashboard</a>
+<h2>GHSS Chakrohi - Category & Gender Report (Approved Admissions)</h2>
+
+<div class="grid">
+<div class="card"><h3>Total Approved</h3><h1 style="color:#0b3d91">{{data.total_approved}}</h1></div>
+<div class="card"><h3>SC Students</h3><h1 style="color:#7c3aed">{{data.sc}}</h1></div>
+<div class="card"><h3>ST Students</h3><h1 style="color:#059669">{{data.st}}</h1></div>
+<div class="card"><h3>OBC Students</h3><h1 style="color:#d97706">{{data.obc}}</h1></div>
+<div class="card"><h3>General</h3><h1 style="color:#dc2626">{{data.general}}</h1></div>
+<div class="card"><h3>Others / Not Filled</h3><h1 style="color:#64748b">{{data.other}}</h1></div>
+</div>
+
+<div class="grid">
+<div class="card">
+<h3>Gender Overall</h3>
+<table><tr><th>Type</th><th>Count</th></tr>
+<tr><td>Boys Total</td><td><b>{{data.boys_total}}</b></td></tr>
+<tr><td>Girls Total</td><td><b>{{data.girls_total}}</b></td></tr>
+</table>
+<canvas id="genderChart" height="200"></canvas>
+</div>
+
+<div class="card">
+<h3>Class 11th</h3>
+<table><tr><th>Type</th><th>Count</th></tr>
+<tr><td>Boys 11th</td><td><b>{{data.boys_11}}</b></td></tr>
+<tr><td>Girls 11th</td><td><b>{{data.girls_11}}</b></td></tr>
+<tr style="background:#f8fafc"><td><b>Total 11th</b></td><td><b>{{data.total_11}}</b></td></tr>
+</table>
+</div>
+
+<div class="card">
+<h3>Class 12th</h3>
+<table><tr><th>Type</th><th>Count</th></tr>
+<tr><td>Boys 12th</td><td><b>{{data.boys_12}}</b></td></tr>
+<tr><td>Girls 12th</td><td><b>{{data.girls_12}}</b></td></tr>
+<tr style="background:#f8fafc"><td><b>Total 12th</b></td><td><b>{{data.total_12}}</b></td></tr>
+</table>
+</div>
+
+<div class="card">
+<h3>Category Wise Chart</h3>
+<canvas id="casteChart" height="200"></canvas>
+</div>
+</div>
+
+<div class="card">
+<p style="color:#64748b;font-size:12px">Note: If Boys/Girls showing 0, update old admissions with Gender field. For new admission form, add Gender field in admission.html: <br><code> &lt;select name="gender"&gt;&lt;option&gt;Male&lt;/option&gt;&lt;option&gt;Female&lt;/option&gt;&lt;/select&gt;</code> and save it in DB.</p>
+<a href="/admin/student_report/excel" style="background:#0b3d91;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none">Download Excel Report</a>
+</div>
+
+</div>
+
+<script>
+new Chart(document.getElementById('casteChart'), {type:'doughnut', data:{labels:['SC','ST','OBC','General','Other'], datasets:[{data:[{{data.sc}},{{data.st}},{{data.obc}},{{data.general}},{{data.other}}], backgroundColor:['#7c3aed','#059669','#d97706','#dc2626','#94a3b8']}]}});
+new Chart(document.getElementById('genderChart'), {type:'pie', data:{labels:['Boys','Girls'], datasets:[{data:[{{data.boys_total}},{{data.girls_total}}], backgroundColor:['#0b3d91','#ec4899']}]}});
+</script>
+</body>
+</html>

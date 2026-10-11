@@ -48,7 +48,13 @@ input,select{width:100%;padding:8px;border:1px solid #ccc;border-radius:5px;font
 
 <div class="title">Personal Details</div>
 <div class="grid">
-<div class="full"><label>STUDENT FULL NAME</label><input name="name" value="{{ data.get('name','') }}" required></div>
+<div ><label>STUDENT FULL NAME</label><input name="name" value="{{ data.get('name','') }}" required></div>
+
+<div ><label>GENDER</label><select name="gender" required>
+  <option value="Male" {% if data.get('gender')=='Male' %}selected{% endif %}>Male</option>
+  <option value="Female" {% if data.get('gender')=='Female' %}selected{% endif %}>Female</option>
+</select></div>
+
 <div><label>FATHER'S NAME</label><input name="father_name" value="{{ data.get('father_name','') }}"></div>
 <div><label>MOTHER'S NAME</label><input name="mother_name" value="{{ data.get('mother_name','') }}"></div>
 <div><label>DOB</label><input type="date" name="dob" value="{{ data.get('dob','') }}"></div>
@@ -59,11 +65,11 @@ input,select{width:100%;padding:8px;border:1px solid #ccc;border-radius:5px;font
 
 <div class="title">9. Subjects Opted</div>
 <div class="grid">
-<div><label>Sub1 English</label><input name="sub1" value="{{ data.get('sub1','') }}"></div>
-<div><label>Sub2</label><input name="sub2" value="{{ data.get('sub2','') }}"></div>
-<div><label>Sub3</label><input name="sub3" value="{{ data.get('sub3','') }}"></div>
-<div><label>Sub4</label><input name="sub4" value="{{ data.get('sub4','') }}"></div>
-<div><label>Sub5</label><input name="sub5" value="{{ data.get('sub5','') }}"></div>
+<div><label>Subject 1 English</label><input name="sub1" value="{{ data.get('sub1','') }}"></div>
+<div><label>Subject 2</label><input name="sub2" value="{{ data.get('sub2','') }}"></div>
+<div><label>Subject 3</label><input name="sub3" value="{{ data.get('sub3','') }}"></div>
+<div><label>Subject4</label><input name="sub4" value="{{ data.get('sub4','') }}"></div>
+<div><label>Subject5</label><input name="sub5" value="{{ data.get('sub5','') }}"></div>
 </div>
 
 <div class="title">10. Academic Report</div>

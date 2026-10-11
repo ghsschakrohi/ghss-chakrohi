@@ -56,20 +56,35 @@ table input{width:100%;border:none;padding:6px;box-sizing:border-box}
 </div>
 
 <div class="section-title">Personal Details</div>
+
 <div class="row">
-<div class="col full"><label>1. Name (In Capital Letters) <span class="req">*</span></label><input type="text" name="name" required style="text-transform:uppercase" placeholder="STUDENT FULL NAME"></div>
+<div class="col"><label>1. Name (In Capital Letters) <span class="req">*</span></label><input type="text" name="name" required style="text-transform:uppercase" placeholder="STUDENT FULL NAME"></div>
+
+<div class="col">
+<label>2.Gender<span class="req">*</span> </label>
+<select name="gender" required>
+  <option value="">Select Gender</option>
+  <option value="Male">Male</option>
+  <option value="Female">Female</option>
+  <option value="Other">Other</option>
+</select>
+</div></div>
+
+<div class="row">
+<div class="col"><label>3 Father's Name <span class="req">*</span></label><input type="text" name="father_name" required></div>
+
+<div class="col"><label>4. Mother's Name <span class="req">*</span></label><input type="text" name="mother_name" required></div>
 </div>
+
 <div class="row">
-<div class="col"><label>2. Father's Name <span class="req">*</span></label><input type="text" name="father_name" required></div>
-<div class="col"><label>3. Mother's Name <span class="req">*</span></label><input type="text" name="mother_name" required></div>
+<div class="col"><label>5. Date of Birth <span class="req">*</span></label><input type="date" name="dob" required></div>
+<div class="col"><label>6. Residence <span class="req">*</span></label><input type="text" name="residence" required placeholder="Village, Tehsil, District"></div>
 </div>
+
 <div class="row">
-<div class="col"><label>4. Date of Birth <span class="req">*</span></label><input type="date" name="dob" required></div>
-<div class="col"><label>5. Residence <span class="req">*</span></label><input type="text" name="residence" required placeholder="Village, Tehsil, District"></div>
-</div>
-<div class="row">
-<div class="col"><label>6. Caste <span class="req">*</span></label><select name="caste" required><option value="">Select</option><option selected>General</option><option>OBC</option><option>SC</option><option>ST</option><option>EWS</option></select></div>
-<div class="col"><label>7. Registration No <span class="req">*</span></label><input type="text" name="registration_no" required placeholder="e.g. 12347685432"></div>
+<div class="col"><label>7. Caste <span class="req">*</span></label><select name="caste" required><option value="">Select</option><option selected>General</option><option>OBC</option><option>SC</option><option>ST</option><option>EWS</option></select></div>
+
+<div class="col"><label>8. Registration No <span class="req">*</span></label><input type="text" name="registration_no" required placeholder="e.g. 12347685432"></div>
 </div>
 
 <div class="section-title">9. Subjects Opted</div>

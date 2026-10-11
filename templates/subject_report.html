@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Subject Wise Count - GHSS Chakrohi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:Arial;background:#f1f5f9;padding:20px}
+.card{background:#fff;max-width:1000px;margin:0 auto;padding:20px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+table{width:100%;border-collapse:collapse;margin-top:15px}
+th{background:#0b3d91;color:#fff;padding:10px;text-align:left}
+td{padding:10px;border-bottom:1px solid #ddd}
+.badge{background:#16a34a;color:#fff;padding:4px 10px;border-radius:20px;font-size:12px}
+.filter{margin-bottom:15px}
+</style>
+</head>
+<body>
+<div class="card">
+<h2 style="color:#0b3d91;text-align:center">Subject Wise Student Count</h2>
+
+<form class="filter" method="GET">
+<select name="class" onchange="this.form.submit()">
+<option value="">All Classes</option>
+{% for c in classes %}
+<option value="{{c}}" {% if c==selected_class %}selected{% endif %}>{{c}}</option>
+{% endfor %}
+</select>
+<a href="/admin/subject_report" style="margin-left:10px">Reset</a>
+<a href="/admin/dashboard" style="float:right">Dashboard</a>
+</form>
+
+<table>
+<tr><th>#</th><th>Subject</th><th>Total Students Opted</th></tr>
+{% for row in subject_data %}
+<tr>
+<td>{{loop.index}}</td>
+<td><b>{{row[0]}}</b></td>
+<td><span class="badge">{{row[1]}}</span></td>
+</tr>
+{% endfor %}
+</table>
+
+<h3 style="margin-top:30px;color:#0b3d91">Class + Subject Breakdown</h3>
+<table>
+<tr><th>Class</th><th>Subject</th><th>Count</th></tr>
+{% for b in breakdown %}
+<tr><td>{{b[0]}}</td><td>{{b[1]}}</td><td>{{b[2]}}</td></tr>
+{% endfor %}
+</table>
+</div>
+</body>
+</html>

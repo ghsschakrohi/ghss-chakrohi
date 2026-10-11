@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html><head><title>Class Result Report - GHSS Chakrohi</title><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:Arial;background:#f1f5f9;padding:15px}
+.box{background:#fff;max-width:1500px;margin:auto;border-radius:8px;overflow:hidden;box-shadow:0 4px 12px #0001}
+.top{background:#0b3d91;color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.filters{padding:12px 18px;background:#f8fafc;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid #e2e8f0}
+.filters select,.filters input{padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:13px}
+.btn{padding:8px 14px;border:none;border-radius:5px;font-weight:bold;cursor:pointer;text-decoration:none;display:inline-block;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#0b3d91;color:#fff;padding:8px 6px;position:sticky;top:0;text-align:center;white-space:nowrap}
+td{padding:7px 6px;border-bottom:1px solid #e2e8f0;text-align:center}
+td.name{ text-align:left; font-weight:bold; }
+tr:hover{background:#f0f7ff}
+.badge{padding:3px 7px;border-radius:12px;font-size:10px;color:#fff}
+.sub-name{font-size:11px; color:#0b3d91; font-weight:bold; display:block}
+.marks{font-size:12px}
+@media print{.no-print{display:none} body{background:#fff;padding:0}.box{box-shadow:none}}
+</style>
+</head><body>
+<div class="box">
+<div class="top">
+  <div>
+    <b>📊 GHSS CHAKROHI - CLASS WISE RESULT REPORT</b><br>
+    <span style="font-size:11px;opacity:.9">Class: {{selected_class}} | Stream: {{selected_stream or 'All'}} | Students: {{report_data|length}} | Principal: Mrs. Pushpa Lochan</span>
+  </div>
+  <div class="no-print">
+    <a href="/admin/dashboard" class="btn" style="background:#e2e8f0;color:#111">← Dashboard</a>
+    <button onclick="window.print()" class="btn" style="background:#0b3d91;color:#fff">🖨️ Print / PDF</button>
+  </div>
+</div>
+
+<form class="filters no-print" method="POST" action="/admin/class_result_report">
+  <input type="text" name="search_name" placeholder="Search Student Name" value="{{ search_name or '' }}" style="min-width:180px">
+  <select name="class_name" required>
+    {% for c in classes %}<option value="{{c}}" {% if c==selected_class %}selected{% endif %}>{{c}}</option>{% endfor %}
+  </select>
+  <select name="stream">
+    <option value="">All Streams</option>
+    <option value="Arts" {% if selected_stream=='Arts' %}selected{% endif %}>Arts</option>
+    <option value="Medical" {% if selected_stream=='Medical' %}selected{% endif %}>Medical</option>
+    <option value="Non-Medical" {% if selected_stream=='Non-Medical' or selected_stream=='Non Medical' %}selected{% endif %}>Non-Medical</option>
+  </select>
+  <button class="btn" style="background:#0b3d91;color:#fff">Search / Generate</button>
+  <a href="/admin/class_result_report" class="btn" style="background:#64748b;color:#fff">Reset</a>
+</form>
+
+<div style="overflow:auto;max-height:75vh">
+<table>
+<tr>
+  <th>S.No</th>
+  <th>Roll No</th>
+  <th style="text-align:left;">Name / Stream</th>
+  <th>Sub-1 (Opted)</th>
+  <th>Sub-2 (Opted)</th>
+  <th>Sub-3 (Opted)</th>
+  <th>Sub-4 (Opted)</th>
+  <th>Sub-5 (Opted)</th>
+  <th>Total<br>Obt/Max</th>
+  <th>Percentage</th>
+  <th>Result</th>
+</tr>
+{% for r in report_data %}
+<tr>
+  <td>{{r.sno}}</td>
+  <td><b style="color:#0b3d91">{{r.roll_no}}</b></td>
+  <td class="name">{{r.name}}<br><span style="font-size:10px; color:#64748b">{{r.stream}} - {{r.class_name}}</span></td>
+
+  {% for sub in r.opted_subjects %}
+    <td>
+      {% if sub %}
+        <span class="sub-name">{{ sub }}</span>
+        <span class="marks">{{ r.marks[sub].obt }}/{{ r.marks[sub].max }}</span>
+      {% else %}
+        <span style="color:#ccc">-</span>
+      {% endif %}
+    </td>
+  {% endfor %}
+
+  <td><b>{{r.total}}/{{r.max_total}}</b></td>
+  <td><b>{{r.percentage}}%</b></td>
+  <td>
+    {% if r.percentage >= 60 %}<span class="badge" style="background:#16a34a">Ist Div</span>
+    {% elif r.percentage >= 45 %}<span class="badge" style="background:#2563eb">IInd Div</span>
+    {% elif r.percentage >= 33 %}<span class="badge" style="background:#d97706">IIIrd Div</span>
+    {% else %}<span class="badge" style="background:#dc2626">Fail</span>
+    {% endif %}
+  </td>
+</tr>
+{% else %}
+<tr><td colspan="11" style="text-align:center;padding:20px;color:#999">No Data Found for {{selected_class}} - {{selected_stream}} - "{{search_name}}"</td></tr>
+{% endfor %}
+</table>
+</div>
+<div style="padding:10px 18px; background:#f8fafc; font-size:11px; color:#475569">
+  <b>Note:</b>
+  <b>Arts:</b> English, Pol Sci, Sociology, Education, Hindi/Urdu (only 1 of Hindi/Urdu), CS, Electronics, Geography - Any 5.
+  <b>Medical:</b> English, Physics, Chemistry, Biology (Bot+Zoo) Mandatory + 1 Optional [EVS/CS/Electronics/Maths/Geography].
+  <b>Non-Medical:</b> English, Physics, Chemistry, Maths Mandatory + 1 Optional [Electronics/CS/Geography/Biology]. Only 5 opted subjects shown.
+</div>
+</div>
+</body></html>

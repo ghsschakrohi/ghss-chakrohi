@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Enter Marks - GHSS Chakrohi</title>
+<style>
+body{font-family:'Segoe UI',Arial; background:#f0f4f8; margin:0; padding:20px}
+.box{background:white; max-width:650px; margin:20px auto; padding:30px; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.12)}
+h2{text-align:center; color:#0d47a1; margin-top:0}
+label{font-weight:bold; margin-top:12px; display:block; color:#333}
+input,select{width:100%; padding:12px; margin:6px 0 12px 0; border-radius:8px; border:1px solid #bbb; box-sizing:border-box; font-size:15px}
+button{background:#2e7d32; color:white; padding:14px; width:100%; border:none; border-radius:8px; font-size:17px; font-weight:bold; cursor:pointer; margin-top:10px}
+button:hover{background:#1b5e20}
+.msg{background:#c8e6c9; color:#1b5e20; padding:12px; border-radius:8px; text-align:center; font-weight:bold}
+.top-bar{background:#0d47a1; color:white; padding:10px 20px; border-radius:8px; display:flex; justify-content:space-between; margin-bottom:15px}
+</style>
+</head>
+<body>
+<div class="box">
+<div class="top-bar"><span>👨‍🏫 {{user}}</span><span><a href="/dashboard" style="color:white">Dashboard</a></span></div>
+<h2>📝 Monthly Marks Entry</h2>
+{% if msg %}<div class="msg">{{msg}} ✅</div>{% endif %}
+<form method="post">
+<label>Select Student (56 Students in DB):</label>
+<select name="reg_no" required>
+<option value="">-- Select Student --</option>
+{% for s in students %}
+<option value="{{s[0]}}">{{s[0]}} - {{s[1]}}</option>
+{% endfor %}
+</select>
+
+<label>Month / Test Name:</label>
+<select name="month" required>
+<option>September 2026</option>
+<option>Monthly Test - 1</option>
+<option>Monthly Test - 2</option>
+<option>October 2026</option>
+<option>November 2026</option>
+<option>Final Term</option>
+</select>
+
+<label>Subject:</label>
+<input name="subject" list="subjects" placeholder="e.g. Computer Science" required>
+<datalist id="subjects">
+<option>Computer Science</option><option>Physics</option><option>Chemistry</option><option>Maths</option><option>English</option><option>Hindi</option>
+</datalist>
+
+<div style="display:flex; gap:15px">
+<div style="flex:1"><label>Marks Obtained:</label><input name="marks" type="number" min="0" max="100" required></div>
+<div style="flex:1"><label>Max Marks:</label><input name="max_marks" type="number" value="100" required></div>
+</div>
+
+<button type="submit">💾 Save Marks to Database</button>
+</form>
+<br>
+<center><a href="/dashboard" style="text-decoration:none; color:#0d47a1">← Back to Dashboard</a> | <a href="/logout" style="text-decoration:none; color:red">Logout</a></center>
+</div>
+</body>
+</html>
