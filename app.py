@@ -31,7 +31,7 @@ def init_db():
     cur.execute("""CREATE TABLE IF NOT EXISTS students (id INTEGER PRIMARY KEY AUTOINCREMENT, enrollment_no TEXT UNIQUE, first_name TEXT, last_name TEXT, father_name TEXT, class_name TEXT, section TEXT, dob TEXT, contact TEXT, address TEXT, class TEXT, mobile TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
     cur.execute("""CREATE TABLE IF NOT EXISTS teachers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, designation TEXT, subject TEXT, exp TEXT, qualification TEXT, wef TEXT)""")
     cur.execute("""CREATE TABLE IF NOT EXISTS activities (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT, activity_date DATE, photo TEXT, uploaded_by TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
-    cur.execute("""CREATE TABLE IF NOT EXISTS monthly_results (id INTEGER PRIMARY KEY AUTOINCREMENT, reg_no TEXT, month TEXT, subject TEXT, marks INTEGER, max_marks INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
+    cur.execute("""CREATE TABLE IF NOT EXISTS monthly_results (id INTEGER PRIMARY KEY AUTOINCREMENT, reg_no TEXT, class_name TEXT, month TEXT, subject TEXT, marks INTEGER, max_marks INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
     cur.execute("""CREATE TABLE IF NOT EXISTS admissions (id INTEGER PRIMARY KEY AUTOINCREMENT, contact_no TEXT, aadhar_shilla TEXT, form_date DATE, session TEXT, class_name TEXT, adm_no TEXT, stream TEXT, appar_id TEXT, udise_no TEXT, name TEXT, father_name TEXT, mother_name TEXT, dob DATE, residence TEXT, caste TEXT, registration_no TEXT, ration_type TEXT, sub1 TEXT, sub2 TEXT, sub3 TEXT, sub4 TEXT, sub5 TEXT, middle_year TEXT, middle_marks TEXT, middle_per TEXT, middle_sub TEXT, middle_school TEXT, middle_re TEXT, sse_year TEXT, sse_marks TEXT, sse_per TEXT, sse_sub TEXT, sse_school TEXT, sse_re TEXT, hsp_year TEXT, hsp_marks TEXT, hsp_per TEXT, hsp_sub TEXT, hsp_school TEXT, hsp_re TEXT, aadhar_self TEXT, aadhar_father TEXT, aadhar_mother TEXT, father_occupation TEXT, father_income TEXT, bank_account TEXT, bank_ifsc TEXT, undertaking_name TEXT, undertaking_father TEXT, undertaking_ro TEXT, undertaking_class TEXT, gender TEXT, status TEXT DEFAULT 'Pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
     cur.execute("SELECT * FROM users WHERE username='principal'")
     if not cur.fetchone():
@@ -78,6 +78,64 @@ def admin_login():
         if user: session['admin']=True; session['user_id']=user[0]; session['username']=user[1]; session['full_name']=user[3]; session['role']=user[4]; session['subject']=user[5]; return redirect('/admin/dashboard')
         else: return "<h3 style='color:red;text-align:center;margin-top:100px'>Invalid Login<br><a href='/admin'>Try Again</a></h3>"
     return render_template('admin_login.html')
+
+# ==================== FORGOT PASSWORD - START ====================
+@app.route('/forgot-password', methods=['GET','POST'])
+def forgot_password():
+    if request.method == 'POST':
+        username = request.form.get('username','').strip()
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT mobile FROM users WHERE username=? AND is_active=1", (username,))
+        row = cursor.fetchone()
+        if row and row[0]:
+            mobile = str(row[0]).strip().replace("+91","").replace(" ","")[-10:]
+            otp = str(random.randint(100000,999999))
+            session['reset_otp'] = otp
+            session['reset_user'] = username
+            try:
+                msg = f"Your GHSS Chakrohi ERP OTP is {otp}. Valid for 5 mins. Do not share."
+                url = "https://www.fast2sms.com/dev/bulkV2"
+                params = {"authorization": FAST2SMS_API_KEY, "route": "q", "message": msg, "language": "english", "flash": 0, "numbers": mobile}
+                resp = requests.get(url, params=params, timeout=15)
+                print(f"SMS to {mobile}: {resp.text}")
+            except Exception as e:
+                print(f"SMS Error: {e}")
+                return "<div style='text-align:center;padding:50px'><h3 style='color:red'>SMS service temporarily unavailable. Try later.</h3><a href='/forgot-password'>Back</a></div>"
+            masked = f"{mobile[:2]}****{mobile[-2:]}"
+            return f"<div style='text-align:center;padding:50px'><h2 style='color:green'>OTP Sent Successfully</h2><p>OTP sent to your registered mobile {masked}</p><a href='/verify-otp'><button style='padding:10px 20px;background:#0b3d91;color:white;border:none;border-radius:5px'>Verify OTP</button></a></div>"
+        else:
+            return "<h3 style='color:red;text-align:center'>User not found or mobile not registered<br><a href='/forgot-password'>Back</a></h3>"
+    return render_template('forgot_password.html')
+
+@app.route('/verify-otp', methods=['GET','POST'])
+def verify_otp():
+    if request.method == 'POST':
+        entered = request.form.get('otp','').strip()
+        new_pass = request.form.get('new_password','').strip()
+        confirm = request.form.get('confirm_password','').strip()
+        if new_pass != confirm:
+            return "<h3 style='text-align:center'>Passwords do not match<br><a href='/verify-otp'>Back</a></h3>"
+        if not session.get('reset_otp'):
+            return "<h3 style='text-align:center'>Session expired<br><a href='/forgot-password'>Start Again</a></h3>"
+        if entered == session.get('reset_otp'):
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET password=? WHERE username=?", (new_pass, session.get('reset_user')))
+            conn.commit()
+            return "<h2 style='text-align:center;color:green;padding:50px'>Password Reset Successful!<br><br><a href='/admin'>Login Now</a></h2>"
+        else:
+            return "<h3 style='text-align:center;color:red'>Invalid OTP<br><a href='/verify-otp'>Try Again</a></h3>"
+    html = "<div style='max-width:400px;margin:80px auto;padding:20px;border:1px solid #ccc;border-radius:8px'>"
+    html += "<h2 style='text-align:center;color:#0b3d91'>Verify OTP</h2>"
+    html += "<form method='POST'>"
+    html += "<input name='otp' placeholder='Enter OTP from SMS' required style='width:100%;padding:12px;margin-top:15px'><br>"
+    html += "<input type='password' name='new_password' placeholder='New Password' required style='width:100%;padding:12px;margin-top:10px'><br>"
+    html += "<input type='password' name='confirm_password' placeholder='Confirm Password' required style='width:100%;padding:12px;margin-top:10px'><br>"
+    html += "<button style='width:100%;padding:12px;background:#0b3d91;color:white;margin-top:15px;border:none;border-radius:4px'>Reset Password</button>"
+    html += "</form></div>"
+    return html
+# ==================== FORGOT PASSWORD - END ====================
 
 @app.route('/admin/dashboard')
 def dashboard():
