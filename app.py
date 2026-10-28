@@ -5,6 +5,8 @@ import io
 import base64
 import random
 import requests
+from dotenv import load_dotenv
+load_dotenv()
 try:
     import pandas as pd
 except:
@@ -18,8 +20,8 @@ import time
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'ghss-01131502304'
-FAST2SMS_API_KEY = "DnMZlzvTrHgeQqM22KNlVYxAOpWTR61u3DLr4D9zR5JbE5rpQicF606xcCid"
+app.secret_key = os.getenv("FLASK_SECRET_KEY", 'ghss-01131502304')
+FAST2SMS_API_KEY = os.getenv("FAST2SMS_API_KEY")
 DATABASE = 'school.db'
 
 def init_db():
@@ -188,7 +190,6 @@ def delete_activity(id):
     if not session.get('admin'): return redirect('/admin')
     conn = get_db(); cursor = conn.cursor(); cursor.execute('DELETE FROM activities WHERE id=?', (id,)); conn.commit(); return redirect('/admin/dashboard')
 
-# ===== MISSING REPORTS ADDED - FULL LOCAL CODE EQUIVALENT =====
 @app.route('/admin/category_report')
 def category_report():
     if not session.get('admin'): return redirect('/admin')
@@ -309,4 +310,6 @@ else:
     init_db()
 
 if __name__ == '__main__':
+    if not FAST2SMS_API_KEY:
+        print("WARNING: FAST2SMS_API_KEY not set in .env - SMS will not work")
     app.run(host='0.0.0.0', port=8080, debug=True)
