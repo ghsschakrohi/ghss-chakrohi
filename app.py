@@ -5,6 +5,8 @@ import io
 import base64
 import random
 import requests
+import urllib.parse
+import time
 from dotenv import load_dotenv
 load_dotenv()
 try:
@@ -15,8 +17,6 @@ try:
     import qrcode
 except:
     qrcode = None
-import urllib.parse
-import time
 from datetime import datetime
 
 app = Flask(__name__)
@@ -24,11 +24,24 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", 'ghss-01131502304')
 FAST2SMS_API_KEY = os.getenv("FAST2SMS_API_KEY")
 DATABASE = 'school.db'
 
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+        db.row_factory = sqlite3.Row
+    return db
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
+
 def init_db():
     conn = sqlite3.connect(DATABASE)
     cur = conn.cursor()
     cur.execute("""CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, full_name TEXT, role TEXT, subject TEXT, mobile TEXT, is_active INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
-    cur.execute("""CREATE TABLE IF NOT EXISTS students (id INTEGER PRIMARY KEY AUTOINCREMENT, enrollment_no TEXT UNIQUE, first_name TEXT, last_name TEXT, father_name TEXT, class_name TEXT, section TEXT, dob TEXT, contact TEXT, address TEXT, class TEXT, mobile TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
+    cur.execute("""CREATE TABLE IF NOT EXISTS students (id INTEGER PRIMARY KEY AUTOINCREMENT, enrollment_no TEXT UNIQUE, first_name TEXT, father_name TEXT, class TEXT, dob TEXT, mobile TEXT, address TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
     cur.execute("""CREATE TABLE IF NOT EXISTS teachers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, designation TEXT, subject TEXT, exp TEXT, qualification TEXT, wef TEXT)""")
     cur.execute("""CREATE TABLE IF NOT EXISTS activities (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT, activity_date DATE, photo TEXT, uploaded_by TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
     cur.execute("""CREATE TABLE IF NOT EXISTS monthly_results (id INTEGER PRIMARY KEY AUTOINCREMENT, reg_no TEXT, class_name TEXT, month TEXT, subject TEXT, marks INTEGER, max_marks INTEGER, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
@@ -43,19 +56,6 @@ def init_db():
             cur.execute("INSERT INTO teachers (name, designation, subject, exp, qualification, wef) VALUES (?,?,?,?,?,?)", s)
     conn.commit(); conn.close()
     os.makedirs('static/uploads/activities', exist_ok=True)
-
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-        db.row_factory = sqlite3.Row
-    return db
-
-@app.teardown_appcontext
-def close_connection(exception):
-    db = getattr(g, '_database', None)
-    if db is not None:
-        db.close()
 
 @app.route('/')
 def home():
@@ -75,17 +75,26 @@ def admin_login():
         conn = get_db(); cursor = conn.cursor()
         cursor.execute("SELECT id, username, password, full_name, role, subject FROM users WHERE username=? AND password=? AND is_active=1", (username, password))
         user = cursor.fetchone()
-        if user: session['admin']=True; session['user_id']=user[0]; session['username']=user[1]; session['full_name']=user[3]; session['role']=user[4]; session['subject']=user[5]; return redirect('/admin/dashboard')
-        else: return "<h3 style='color:red;text-align:center;margin-top:100px'>Invalid Login<br><a href='/admin'>Try Again</a></h3>"
+        if user:
+            session['admin']=True; session['user_id']=user[0]; session['username']=user[1]; session['full_name']=user[3]; session['role']=user[4]
+            subj = (user[5] or '').strip()
+            uname = str(user[1]).lower(); fname = str(user[3]).lower()
+            if 'paramjit' in uname or 'paramjit' in fname: subj='Computer Science'
+            elif 'shakti' in uname or 'shakti' in fname: subj='Chemistry'
+            elif 'shammi' in fname: subj='Physics'
+            elif not subj or subj.lower() in ['general','']: subj='Computer Science'
+            session['subject']=subj
+            return redirect('/admin/dashboard')
+        else:
+            return "<h3 style='color:red;text-align:center;margin-top:100px'>Invalid Login<br><a href='/admin'>Try Again</a></h3>"
     return render_template('admin_login.html')
 
-# ==================== FORGOT PASSWORD - START ====================
+# ============ FORGOT PASSWORD - RENDER FIXED ============
 @app.route('/forgot-password', methods=['GET','POST'])
 def forgot_password():
     if request.method == 'POST':
         username = request.form.get('username','').strip()
-        conn = get_db()
-        cursor = conn.cursor()
+        conn = get_db(); cursor = conn.cursor()
         cursor.execute("SELECT mobile FROM users WHERE username=? AND is_active=1", (username,))
         row = cursor.fetchone()
         if row and row[0]:
@@ -119,10 +128,10 @@ def verify_otp():
         if not session.get('reset_otp'):
             return "<h3 style='text-align:center'>Session expired<br><a href='/forgot-password'>Start Again</a></h3>"
         if entered == session.get('reset_otp'):
-            conn = get_db()
-            cursor = conn.cursor()
+            conn = get_db(); cursor = conn.cursor()
             cursor.execute("UPDATE users SET password=? WHERE username=?", (new_pass, session.get('reset_user')))
             conn.commit()
+            session.clear()
             return "<h2 style='text-align:center;color:green;padding:50px'>Password Reset Successful!<br><br><a href='/admin'>Login Now</a></h2>"
         else:
             return "<h3 style='text-align:center;color:red'>Invalid OTP<br><a href='/verify-otp'>Try Again</a></h3>"
@@ -135,7 +144,6 @@ def verify_otp():
     html += "<button style='width:100%;padding:12px;background:#0b3d91;color:white;margin-top:15px;border:none;border-radius:4px'>Reset Password</button>"
     html += "</form></div>"
     return html
-# ==================== FORGOT PASSWORD - END ====================
 
 @app.route('/admin/dashboard')
 def dashboard():
@@ -166,7 +174,7 @@ def logout(): session.clear(); return redirect('/admin')
 
 @app.route('/lab/<lab_name>')
 def lab_detail(lab_name):
-    labs_data = {'physics': {'name': 'Physics Lab', 'description': 'Well equipped Physics Lab with modern apparatus', 'photo': '/static/physics.jpg'},'chemistry': {'name': 'Chemistry Lab', 'description': 'Chemistry Lab', 'photo': '/static/chemistry.jpg'},'biology': {'name': 'Biology Lab', 'description': 'Biology Lab', 'photo': '/static/biology.jpg'},'computer': {'name': 'Computer Lab', 'description': 'Computer Lab', 'photo': '/static/computer.jpg'}}
+    labs_data = {'physics': {'name': 'Physics Lab', 'description': 'Well equipped Physics Lab', 'photo': '/static/physics.jpg'},'chemistry': {'name': 'Chemistry Lab', 'description': 'Chemistry Lab', 'photo': '/static/chemistry.jpg'},'biology': {'name': 'Biology Lab', 'description': 'Biology Lab', 'photo': '/static/biology.jpg'},'computer': {'name': 'Computer Lab', 'description': 'Computer Lab', 'photo': '/static/computer.jpg'}}
     lab = labs_data.get(lab_name.lower(), {'name': lab_name.title()+' Lab', 'description': 'Well equipped lab', 'photo': '/static/naps_2.jpg'})
     return render_template('lab.html', lab=lab)
 
@@ -189,8 +197,9 @@ def results_page(): return render_template('results.html')
 def check_result():
     reg_no=request.form.get('reg_no','').strip().upper()
     conn=get_db(); cursor=conn.cursor(); cursor.execute("SELECT * FROM students WHERE enrollment_no=?",(reg_no,)); student=cursor.fetchone()
-    if not student: return f"<h2>Student {reg_no} not found</h2>"
+    if not student: return f"<div style='text-align:center;padding:50px'><h2 style='color:red'>Student {reg_no} not found</h2><a href='/results'>Back</a></div>"
     cursor.execute("SELECT * FROM monthly_results WHERE reg_no=?",(reg_no,)); results=cursor.fetchall()
+    if not results: return f"<div style='text-align:center;padding:50px'><h2>No results for {reg_no}</h2><a href='/results'>Back</a></div>"
     total=sum([r[4] for r in results]); max_t=sum([r[5] for r in results]); per=round(total/max_t*100,2) if max_t else 0
     rows="".join([f"<tr><td>{i}</td><td>{r[2]}</td><td>{r[3]}</td><td>{r[5]}</td><td>{r[4]}</td></tr>" for i,r in enumerate(results,1)])
     return f"<h2>{student[2]} - {total}/{max_t} {per}%</h2><table border=1>{rows}</table>"
@@ -205,8 +214,6 @@ def admissions_list():
 def approve_admission(adm_no):
     if not session.get('admin'): return redirect('/admin')
     conn = get_db(); cursor = conn.cursor(); cursor.execute("UPDATE admissions SET status='Approved' WHERE adm_no=?", (adm_no,)); conn.commit()
-    try: cursor.execute("INSERT INTO students (enrollment_no, first_name, father_name, class) SELECT adm_no, name, father_name, class_name FROM admissions WHERE adm_no=? AND adm_no NOT IN (SELECT enrollment_no FROM students)", (adm_no,)); conn.commit()
-    except: pass
     return redirect('/admin/admissions')
 
 @app.route('/admin/reject/<adm_no>')
@@ -263,15 +270,18 @@ def category_report():
         elif 'GEN' in c or 'OPEN' in c: general+=cnt
         else: other+=cnt
     total_approved=sc+st+obc+general+other
-    def get_count(q):
-        try: cursor.execute(q); r=cursor.fetchone(); return r[0] if r else 0
+    def get_count(q, params=()):
+        try: cursor.execute(q, params); r=cursor.fetchone(); return r[0] if r else 0
         except: return 0
     boys_total=get_count("SELECT COUNT(*) FROM admissions WHERE status='Approved' AND UPPER(TRIM(IFNULL(gender,''))) IN ('M','MALE','BOY')")
     girls_total=get_count("SELECT COUNT(*) FROM admissions WHERE status='Approved' AND UPPER(TRIM(IFNULL(gender,''))) IN ('F','FEMALE','GIRL')")
     total_11=get_count("SELECT COUNT(*) FROM admissions WHERE status='Approved' AND UPPER(TRIM(class_name)) LIKE '%11TH%'")
     total_12=get_count("SELECT COUNT(*) FROM admissions WHERE status='Approved' AND UPPER(TRIM(class_name)) LIKE '%12TH%'")
-    conn.close()
-    data={'sc':sc,'st':st,'obc':obc,'general':general,'other':other,'total_approved':total_approved,'boys_total':boys_total,'girls_total':girls_total,'boys_11':0,'girls_11':0,'total_11':total_11,'boys_12':0,'girls_12':0,'total_12':total_12}
+    boys_11=get_count("SELECT COUNT(*) FROM admissions WHERE status='Approved' AND UPPER(TRIM(class_name)) LIKE '%11TH%' AND UPPER(TRIM(IFNULL(gender,''))) IN ('M','MALE','BOY')", ())
+    girls_11=get_count("SELECT COUNT(*) FROM admissions WHERE status='Approved' AND UPPER(TRIM(class_name)) LIKE '%11TH%' AND UPPER(TRIM(IFNULL(gender,''))) IN ('F','FEMALE','GIRL')", ())
+    boys_12=get_count("SELECT COUNT(*) FROM admissions WHERE status='Approved' AND UPPER(TRIM(class_name)) LIKE '%12TH%' AND UPPER(TRIM(IFNULL(gender,''))) IN ('M','MALE','BOY')", ())
+    girls_12=get_count("SELECT COUNT(*) FROM admissions WHERE status='Approved' AND UPPER(TRIM(class_name)) LIKE '%12TH%' AND UPPER(TRIM(IFNULL(gender,''))) IN ('F','FEMALE','GIRL')", ())
+    data={'sc':sc,'st':st,'obc':obc,'general':general,'other':other,'total_approved':total_approved,'boys_total':boys_total,'girls_total':girls_total,'boys_11':boys_11,'girls_11':girls_11,'total_11':total_11,'boys_12':boys_12,'girls_12':girls_12,'total_12':total_12}
     return render_template('category_report.html', data=data, user=session.get('full_name'), role=session.get('role'))
 
 @app.route('/admin/upload_marks')
@@ -299,7 +309,8 @@ def upload_bulk_marks():
     conn=get_db(); cursor=conn.cursor()
     month=(request.form.get('month') or 'UT-1').strip(); subject=(request.form.get('subject') or '').strip()
     max_marks_val=int(request.form.get('max_marks','100'))
-    if str(session.get('role')).lower() not in ['admin','administrator']:
+    user_role = str(session.get('role') or '').lower()
+    if user_role not in ['admin', 'administrator']:
         if session.get('subject') and str(session.get('subject')).lower()!='general': subject=session.get('subject')
     adm_nos=request.form.getlist('adm_no'); marks_list=request.form.getlist('marks')
     if not adm_nos: adm_nos=request.form.getlist('adm_no[]')
@@ -370,4 +381,5 @@ else:
 if __name__ == '__main__':
     if not FAST2SMS_API_KEY:
         print("WARNING: FAST2SMS_API_KEY not set in .env - SMS will not work")
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
